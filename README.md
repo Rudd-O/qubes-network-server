@@ -2,6 +2,23 @@
 
 This software lets you turn your [Qubes OS](https://www.qubes-os.org/) machine into a network server, enjoying all the benefits of Qubes OS (isolation, secure inter-VM process communication, ease of use) with none of the drawbacks of setting up your own Xen server.
 
+##Why?
+
+Qubes OS is a magnificent operating system, but there are so many use cases that its networking model cannot crack:
+
+* As an automated integration testing system.  Qubes OS would be
+  phenomenal for this, and its automation tools would make it
+  extremely easy to bring up and tear down entire environments.
+  If only those environments could network with each other securely!
+* Remote management of Qubes OS instances.  Vanilla Qubes OS cannot
+  easily be managed remotely.  A better networking model would allow
+  for orchestration tools — such as
+  [Ansible Qubes](https://github.com/Rudd-O/ansible-qubes) — to manage
+  entire Qubes OS deployments, all of their VMs, and even minutiae
+  within each VM.
+* Anything that involves a secure server, serving data to people or
+  machines, simply cannot be done under vanilla Qubes OS.
+
 ##Enhanced networking model
 
 The traditional Qubes OS networking model contemplates a client-only
