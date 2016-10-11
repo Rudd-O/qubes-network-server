@@ -1,0 +1,15 @@
+To do list:
+
+* Make the system do the right thing (withdraw ip neigh /
+  ip route / iptables rules) when VMs power off or when
+  their network gets detached.
+  Right now the rules are only reconfigured when:
+  * a VM starts (ancestor VMs get reconfigured)
+  * a VM gets unpaused (same as before)
+  * a VM network gets attached (same as before)
+  * a VM's FW rules get altered (parent ProxyVM and sibling
+    VMs get reconfigured, and this reconfiguration only
+    affects iptables rules)
+* Make the system do the right thing when `static_ip`
+  is changed / enabled / disabled, without requiring a
+  VM restart.
