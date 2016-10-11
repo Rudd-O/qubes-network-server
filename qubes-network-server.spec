@@ -1,7 +1,7 @@
 %define debug_package %{nil}
 
 Name:           qubes-network-server
-Version:        0.0.1
+Version:        0.0.2
 Release:        1%{?dist}
 Summary:        Turn your Qubes OS into a network server
 BuildArch:      noarch
