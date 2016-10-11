@@ -4,6 +4,7 @@ Name:           qubes-network-server
 Version:        0.0.1
 Release:        1%{?dist}
 Summary:        Turn your Qubes OS into a network server
+BuildArch:      noarch
 
 License:        GPLv3+
 URL:            https://github.com/Rudd-O/qubes-network-server
@@ -29,7 +30,7 @@ make install DESTDIR=$RPM_BUILD_ROOT BINDIR=%{_bindir} LIBDIR=%{_libdir}
 %files
 %attr(0755, root, root) %{_bindir}/qvm-static-ip
 %attr(0644, root, root) %{_libdir}/python2.7/site-packages/qubes/modules/*.py*
-%doc README.md
+%doc README.md TODO
 
 %changelog
 * Tue Oct 11 2016 Manuel Amador (Rudd-O) <rudd-o@rudd-o.com>
