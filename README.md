@@ -95,7 +95,7 @@ inbound connections.
 You'll also note that `httpserver` has received no permission to
 engage in any sort of outbound network traffic.
 
-##Inter-VM network communication
+###Inter-VM network communication
 
 This software isn't limited to just letting network servers be
 accessible from your physical network.  VMs can talk among each
@@ -108,7 +108,7 @@ VMs so authorized can talk to each other over the network,
 even when they do not share a ProxyVM between them, of course,
 so long as their ProxyVMs share the same NetVM.
 
-##Disabling network server
+###Disabling network server
 
 Two-step process.  Step one:
 
@@ -136,3 +136,7 @@ qvm-run --pass-io vmwiththerpm 'cat /home/user/path/to/qubes-network-server*rpm'
 ```
 
 This lets you fetch the RPM file to the dom0, and save it as `qns.rpm`.
+
+##Troubleshooting
+
+The actions that the network server software performs are logged to the journal of each of the involved VMs.  Generally, for each VM that has its own `static_ip` address set, this software will perform actions on that VM, on its parent ProxyVM, and on its grandparent NetVM.  In case of problems, tailing the journal (`sudo journalctl -b`) on those three VMs simultaneously can be extremely useful to figure out what is going on.
