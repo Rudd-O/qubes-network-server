@@ -4,8 +4,8 @@ This tutorial will teach you how to set up an SSH server on your Qubes network s
 
 We assume:
 
-1. That you have a desktop or laptop *manager* machine, from which you desire to manage a Qubes OS server.
-2. That you have a Qubes OS *server*, which you want to manage.
+1. That you have a desktop or laptop *manager* machine.
+2. That you have a Qubes OS *server*.
 3. That both machines share a physical network link (e.g. Wi-Fi or Ethernet).
 
 ## Set up Qubes network server
@@ -109,6 +109,8 @@ sudo passwd -l user
 ```
 
 Good news!  You can now remotely log in, from your manager machine,
-to your Qubes OS server.
+to your Qubes OS server.  You are also able to run commands on the
+`exp-manager` VM, directly from your manager machine.
 
-You can also [enable remote management of your Qubes network server](https://github.com/Rudd-O/ansible-qubes/tree/master/doc/Remote management of Qubes OS servers.md).
+Should you want to run commands on *other* VMs of your Qubes OS server,
+then learn how to [enable remote management of your Qubes network server](https://github.com/Rudd-O/ansible-qubes/tree/master/doc/Remote management of Qubes OS servers.md).
