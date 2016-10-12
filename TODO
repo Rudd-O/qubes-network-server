@@ -13,3 +13,15 @@ To do list:
 * Make the system do the right thing when `static_ip`
   is changed / enabled / disabled, without requiring a
   VM restart.
+  * Key point (but not only point): appvm fwrules that
+    were setup need to be un-setup, which means that
+    our current algorithm "look at VMs with static_ip"
+    will not work to un-setup those fwrules.
+  * Define very clearly when fw state is modified
+    for appvm, as that requires execution of code
+    in the appvm, and tracking how and when to
+    undo that state transition.
+* Evaluate network access permissions when appvm
+  is attached to netvm, vs attached to proxyvm to netvm,
+  vs attached to proxyvm to proxyvm to netvm.
+* Prolly need to write some important automated tests.
