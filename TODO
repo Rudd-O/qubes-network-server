@@ -21,7 +21,17 @@ To do list:
     for appvm, as that requires execution of code
     in the appvm, and tracking how and when to
     undo that state transition.
+  * VM's entire IP and everything will be different,
+    and this setup only occurs during initial boot of the
+    VM, so it may be inevitable to force a restart of
+    the VM.  It depends on what kind of stuff depends on
+    the IP being set early on boot.  VM rounting tables,
+    ifconfig, stuff like ip neigh on the ancestor VMS,
+    firewall rules, et cetera.
 * Evaluate network access permissions when appvm
   is attached to netvm, vs attached to proxyvm to netvm,
   vs attached to proxyvm to proxyvm to netvm.
 * Prolly need to write some important automated tests.
+* Document entry points of the plugin that activate
+  code from the plugin, and under which circumstances / events
+  these pieces of code run.
