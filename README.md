@@ -83,6 +83,43 @@ qvm-run --pass-io vmwiththerpm 'cat /home/user/path/to/qubes-network-server*rpm'
 
 This lets you fetch the RPM file to the dom0, and save it as `qns.rpm`.
 
+## Theory of operation
+
+Qubes OS relies on layer 3 (IP) routing.  VMs in its networked tree send traffic through
+their default route interfaces, which upstream VMs receive and masquerade out of their own
+default route interfaces.
+
+Qubes network server slightly changes this when a networked VM — a VM which has had its
+`static_ip` attribute set with `qvm-static-ip` — exists on the networked tree.  As soon
+as a networked VM boots up, Qubes network server:
+
+* sets a static `/32` route on every upstream VM to the networked VM's static IP,
+  directing the upstream VMs to route traffic for that IP to their VIFs where
+  they may find the networked VM
+* enables ARP neighbor proxying for the static IP on every upstream VM, such that
+  every upstream VM announces itself to their own upstream VMs (and LAN, in the
+  case of NetVMs) as the networked VM 
+* sets firewall rules on every upstream VM that allow normal non-masquerading forwarding
+  to and from the IP of the networked VM
+* (depending on the Qubes firewall policy of the networked VM) sets rules on every
+  upstream ProxyVM that allow for certain classes of inbound traffic
+* (depending on the Qubes firewall policy of the networked VM) sets rules directly
+  on the networked VM that allow for certain classes of inbound traffic
+
+The end result is instantaneous networking — machines upstream from the networked VM,
+including machines in the physical LAN, can "see", ping, and connect to the networked
+VM, provided that the firewall policy permits it.  You do not need to set up any
+special host-only routes on machines trying to access your networked VM — provided
+that the static IP is on the same routable subnet as its upstream VM's, Qubes
+network server does its magic automatically.
+
+Of course, LAN machines connecting to the networked VM believe that the networked VM
+possesses the MAC address of its upstream NetVM (just as if the upstream NetVM had a
+second IP address and was serving traffic from it), but in reality, that is just an
+illusion created by Qubes network server.  This does have implications for your own
+network security policy, in that the networked VM appears (from a MAC perspective)
+to share a network card with its upstream NetVM.
+
 ##Troubleshooting
 
 The actions that the network server software performs are logged to the journal of each of the involved VMs.  Generally, for each VM that has its own `static_ip` address set, this software will perform actions on that VM, on its parent ProxyVM, and on its grandparent NetVM.  In case of problems, tailing the journal (`sudo journalctl -b`) on those three VMs simultaneously can be extremely useful to figure out what is going on.
