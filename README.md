@@ -61,20 +61,27 @@ network server:
 * [Setting up an SSH server](doc/Setting up an SSH server.md)
 
 
-##Installation
+## Installation
 
-Installation is extremely easy:
+Installation is straightforward — build package, copy to dom0,
+install in dom0.  Here are step by step instructions:
 
-* Prepare an RPM with the `make rpm` command on the local
-  directory of your clone.  This creates a file
+* Install the `rpm-build` package on your build machine
+  with `sudo dnf install rpm-build`.  Remember that if your
+  build machine is an AppVM or any other sort of VM that boots
+  from a template, you may want to run that `dnf` command on the
+  template, rather than the build machine, and then power off
+  the template, followed by rebooting the build machine.
+* Clone the repository for this program to your build machine.
+* In your build machine, prepare an RPM with the `make rpm`
+  command on the local directory of your clone.  This creates a file
   `qubes-network-server-*-noarch.rpm` on that directory.
-* Copy the prepared RPM to the dom0 of your Qubes OS
-  machine.
+* Copy the prepared RPM to the dom0 of your Qubes OS machine.
 * Install the RPM in the dom0 with
   `rpm -ivh <RPM file name you just copied>`.
-* Restart Qubes Manager, if it is running.
-  (Right-click on its notification icon, select *Exit*, then
-  relaunch it from the *System* menu.)
+* Restart Qubes Manager, if it is running: right-click on its
+  notification icon, select *Exit*, then relaunch it from the
+  *System* submenu of your Qubes OS application menu.
 
 Qubes OS does not provide any facility to copy files from
 a VM to the dom0.  To work around this, you can use `qvm-run`:
@@ -84,7 +91,7 @@ qvm-run --pass-io vmwiththerpm 'cat /home/user/path/to/qubes-network-server*rpm'
 ```
 
 This lets you fetch the RPM file to the dom0, and save it as `qns.rpm`,
-which you can then feed to the `rpm -ivh` command.
+which you can then feed as an argument to the `rpm -ivh` command.
 
 ### Upgrading to new / bug-fixing releases
 
