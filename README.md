@@ -66,10 +66,12 @@ network server:
 Installation is extremely easy:
 
 * Prepare an RPM with the `make rpm` command on the local
-  directory of your clone.
+  directory of your clone.  This creates a file
+  `qubes-network-server-*-noarch.rpm` on that directory.
 * Copy the prepared RPM to the dom0 of your Qubes OS
   machine.
-* Install the RPM with `rpm -ivh`.
+* Install the RPM in the dom0 with
+  `rpm -ivh <RPM file name you just copied>`.
 * Restart Qubes Manager, if it is running.
   (Right-click on its notification icon, select *Exit*, then
   relaunch it from the *System* menu.)
@@ -81,7 +83,13 @@ a VM to the dom0.  To work around this, you can use `qvm-run`:
 qvm-run --pass-io vmwiththerpm 'cat /home/user/path/to/qubes-network-server*rpm' > qns.rpm
 ```
 
-This lets you fetch the RPM file to the dom0, and save it as `qns.rpm`.
+This lets you fetch the RPM file to the dom0, and save it as `qns.rpm`,
+which you can then feed to the `rpm -ivh` command.
+
+### Upgrading to new / bug-fixing releases
+
+Follow the same procedures as above, but when asked to install the package
+with `rpm -ivh`, change it to `rpm -Uvh` (uppercase U for upgrade).
 
 ## Theory of operation
 
@@ -120,6 +128,11 @@ illusion created by Qubes network server.  This does have implications for your 
 network security policy, in that the networked VM appears (from a MAC perspective)
 to share a network card with its upstream NetVM.
 
-##Troubleshooting
+## Limitations
+
+* HVMs are not supported at all at this time.  This will change over time, and
+  you can help it change faster by submitting a pull request with HVM support.
+
+## Troubleshooting
 
 The actions that the network server software performs are logged to the journal of each of the involved VMs.  Generally, for each VM that has its own `static_ip` address set, this software will perform actions on that VM, on its parent ProxyVM, and on its grandparent NetVM.  In case of problems, tailing the journal (`sudo journalctl -b`) on those three VMs simultaneously can be extremely useful to figure out what is going on.
