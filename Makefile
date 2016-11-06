@@ -7,9 +7,10 @@ clean:
 	rm -f *.tar.gz *.rpm
 
 dist: clean
-	DIR=qubes-network-server-`awk '/^Version:/ {print $$2}' qubes-network-server.spec` && FILENAME=$$DIR.tar.gz && tar cvzf "$$FILENAME" --exclude "$$FILENAME" --exclude .git --exclude .gitignore -X .gitignore --transform="s|^|$$DIR/|" --show-transformed *
+	DIR=qubes-network-server-`awk '/^Version:/ {print $$2}' qubes-network-server.spec` && FILENAME=$$DIR.tar.gz && tar czf "$$FILENAME" --exclude "$$FILENAME" --exclude .git --exclude .gitignore -X .gitignore --transform="s|^|$$DIR/|" --show-transformed *
 
 rpm: dist
+	@which rpmbuild || { echo 'rpmbuild is not available.  Please install the rpm-build package with the command `dnf install rpmbuild` to continue, then rerun this step.' ; exit 1 ; }
 	T=`mktemp -d` && rpmbuild --define "_topdir $$T" -ta qubes-network-server-`awk '/^Version:/ {print $$2}' qubes-network-server.spec`.tar.gz || { rm -rf "$$T"; exit 1; } && mv "$$T"/RPMS/*/* "$$T"/SRPMS/* . || { rm -rf "$$T"; exit 1; } && rm -rf "$$T"
 
 srpm: dist
