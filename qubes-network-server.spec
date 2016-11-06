@@ -3,16 +3,22 @@
 %define mybuildnumber %{?build_number}%{?!build_number:1}
 
 Name:           qubes-network-server
-Version:        0.0.4
+Version:        0.0.5
 Release:        %{mybuildnumber}%{?dist}
 Summary:        Turn your Qubes OS into a network server
 BuildArch:      noarch
 
 License:        GPLv3+
 URL:            https://github.com/Rudd-O/qubes-network-server
-Source0:	Source0: https://github.com/Rudd-O/%{name}/archive/{%version}.tar.gz#/%{name}-%{version}.tar.gz
+Source0:	https://github.com/Rudd-O/%{name}/archive/{%version}.tar.gz#/%{name}-%{version}.tar.gz
 
-BuildRequires:  go
+BuildRequires:  make
+BuildRequires:  coreutils
+BuildRequires:  tar
+BuildRequires:  gawk
+BuildRequires:  findutils
+
+Requires:       qubes-core-dom0
 
 %description
 This package lets you turn your Qubes OS into a network server.
