@@ -1,0 +1,9 @@
+Great work, Rudd-O!
+
+changes to src/usr/lib64/python2.7/site-packages/qubes/modules/007FortressQubesProxyVm.py:
+
+If the server VM gets firewall rules besides of "allow all", those rules were only honored for outgoing traffic in the original code.
+My code also creates rules for incoming traffic in the proxy VM and the server VM.
+
+It may not be perfect, but it works for me.
+My code is GPL, of course.
