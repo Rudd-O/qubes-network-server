@@ -1,4 +1,6 @@
+rpm/
+pkgs/
 *.pyc
+*.pyo
 *~
-*.tar.gz
-*.rpm
+.*.swp
