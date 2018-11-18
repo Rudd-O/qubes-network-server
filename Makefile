@@ -1,6 +1,7 @@
 BINDIR=/usr/bin
 LIBDIR=/usr/lib64
 DESTDIR=
+PROGNAME=qubes-network-server
 
 clean:
 	find -name '*.pyc' -o -name '*~' -print0 | xargs -0 rm -f
@@ -11,10 +12,10 @@ dist: clean
 
 rpm: dist
 	@which rpmbuild || { echo 'rpmbuild is not available.  Please install the rpm-build package with the command `dnf install rpmbuild` to continue, then rerun this step.' ; exit 1 ; }
-	T=`mktemp -d` && rpmbuild --define "_topdir $$T" -ta qubes-network-server-`awk '/^Version:/ {print $$2}' qubes-network-server.spec`.tar.gz || { rm -rf "$$T"; exit 1; } && mv "$$T"/RPMS/*/* "$$T"/SRPMS/* . || { rm -rf "$$T"; exit 1; } && rm -rf "$$T"
+	T=`mktemp -d` && rpmbuild --define "_topdir $$T" -ta $(PROGNAME)-`awk '/^Version:/ {print $$2}' $(PROGNAME).spec`.tar.gz || { rm -rf "$$T"; exit 1; } && mv "$$T"/RPMS/*/* "$$T"/SRPMS/* . || { rm -rf "$$T"; exit 1; } && rm -rf "$$T"
 
 srpm: dist
-	T=`mktemp -d` && rpmbuild --define "_topdir $$T" -ts qubes-network-server-`awk '/^Version:/ {print $$2}' qubes-network-server.spec`.tar.gz || { rm -rf "$$T"; exit 1; } && mv "$$T"/SRPMS/* . || { rm -rf "$$T"; exit 1; } && rm -rf "$$T"
+	T=`mktemp -d` && rpmbuild --define "_topdir $$T" -ts $(PROGNAME)-`awk '/^Version:/ {print $$2}' $(PROGNAME).spec`.tar.gz || { rm -rf "$$T"; exit 1; } && mv "$$T"/SRPMS/* . || { rm -rf "$$T"; exit 1; } && rm -rf "$$T"
 
 install:
 	install -Dm 755 src/usr/bin/qvm-static-ip -t $(DESTDIR)/$(BINDIR)/
