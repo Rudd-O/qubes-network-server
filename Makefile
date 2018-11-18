@@ -20,3 +20,4 @@ srpm: dist
 install:
 	install -Dm 755 src/usr/bin/qvm-static-ip -t $(DESTDIR)/$(BINDIR)/
 	install -Dm 644 src/usr/lib64/python2.7/site-packages/qubes/modules/*.py -t $(DESTDIR)/$(LIBDIR)/python2.7/site-packages/qubes/modules
+	install -Dm 644 src/usr/lib64/python2.7/site-packages/qubes/modules/qubes-appvm-firewall -t $(DESTDIR)/$(LIBDIR)/python2.7/site-packages/qubes/modules

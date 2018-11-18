@@ -3,7 +3,7 @@
 %define mybuildnumber %{?build_number}%{?!build_number:1}
 
 Name:           qubes-network-server
-Version:        0.0.6
+Version:        0.0.7
 Release:        %{mybuildnumber}%{?dist}
 Summary:        Turn your Qubes OS into a network server
 BuildArch:      noarch
@@ -38,6 +38,7 @@ make install DESTDIR=$RPM_BUILD_ROOT BINDIR=%{_bindir} LIBDIR=%{_libdir}
 %files
 %attr(0755, root, root) %{_bindir}/qvm-static-ip
 %attr(0644, root, root) %{_libdir}/python2.7/site-packages/qubes/modules/*.py*
+%attr(0644, root, root) %{_libdir}/python2.7/site-packages/qubes/modules/qubes-appvm-firewall
 %doc README.md TODO
 
 %changelog
