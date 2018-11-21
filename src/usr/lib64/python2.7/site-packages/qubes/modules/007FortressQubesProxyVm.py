@@ -96,35 +96,45 @@ class QubesProxyVm(OriginalQubesProxyVm):
                 rules_action = accept_action
 
             for rule in conf["rules"]:
-                if getattr(vm, "static_ip", None) and rule["address"].startswith("from-"):
-                    ruletext = "-s {0} -d {1}".format(rule["address"][len("from-"):], ip)
-                    if rule["netmask"] != 32:
-                        ruletext += "/{0}".format(rule["netmask"])
+                is_inbound = rule["address"].startswith("from-") and getattr(vm, "static_ip", None)
+                if is_inbound:
+                    src_addr = rule["address"][len("from-"):]
+                    src_mask = rule["netmask"]
+                    dst_addr = ip
+                    dst_mask = 32
+                else:
+                    src_addr = ip
+                    src_mask = 32
+                    dst_addr = rule["address"]
+                    dst_mask = rule["netmask"]
 
-                    if rule["proto"] is not None and rule["proto"] != "any":
-                        ruletext += " -p {0}".format(rule["proto"])
-                        if rule["portBegin"] is not None and rule["portBegin"] > 0:
-                            ruletext += " --dport {0}".format(rule["portBegin"])
-                            if rule["portEnd"] is not None and rule["portEnd"] > rule["portBegin"]:
-                                ruletext += ":{0}".format(rule["portEnd"])
+                args = []
 
-                    ruletext += " -j {0}\n".format(rules_action)
-                    iptables += "-A PR-QBS-FORWARD " + ruletext
-                    vm_iptables += "-A FORTRESS-INPUT " + ruletext
-                    continue
+                def constrain(sd, addr, mask):
+                    if mask != 0:
+                        if mask == 32:
+                            args.append("{0} {1}".format(sd, addr))
+                        else:
+                            args.append("{0} {1}/{2}".format(sd, addr, mask))
 
-                iptables += "-A PR-QBS-FORWARD -s {0} -d {1}".format(ip, rule["address"])
-                if rule["netmask"] != 32:
-                    iptables += "/{0}".format(rule["netmask"])
+                constrain("-s", src_addr, src_mask)
+                constrain("-d", dst_addr, dst_mask)
 
                 if rule["proto"] is not None and rule["proto"] != "any":
-                    iptables += " -p {0}".format(rule["proto"])
+                    args.append("-p {0}".format(rule["proto"]))
                     if rule["portBegin"] is not None and rule["portBegin"] > 0:
-                        iptables += " --dport {0}".format(rule["portBegin"])
                         if rule["portEnd"] is not None and rule["portEnd"] > rule["portBegin"]:
-                            iptables += ":{0}".format(rule["portEnd"])
+                            portrange = "{0}:{1}".format(rule["portBegin"], rule["portEnd"])
+                        else:
+                            portrange = rule["portBegin"]
+                        args.append("--dport {0}".format(portrange))
 
-                iptables += " -j {0}\n".format(rules_action)
+                args.append("-j {0}".format(rules_action))
+                ruletext = ' '.join(args)
+
+                iptables += "-A PR-QBS-FORWARD {0}\n".format(ruletext)
+                if is_inbound:
+                    vm_iptables += "-A FORTRESS-INPUT {0}\n".format(ruletext)
 
             if conf["allowDns"] and self.netvm is not None:
                 # PREROUTING does DNAT to NetVM DNSes, so we need self.netvm.

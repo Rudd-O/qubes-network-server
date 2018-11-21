@@ -1,3 +1,5 @@
+%{!?python_sitearch: %define python_sitearch %(%{__python} -c "from distutils.sysconfig import get_python_lib; print get_python_lib(1)")}
+
 %define debug_package %{nil}
 
 %define mybuildnumber %{?build_number}%{?!build_number:1}
@@ -37,8 +39,8 @@ make install DESTDIR=$RPM_BUILD_ROOT BINDIR=%{_bindir} LIBDIR=%{_libdir}
 
 %files
 %attr(0755, root, root) %{_bindir}/qvm-static-ip
-%attr(0644, root, root) %{_libdir}/python2.7/site-packages/qubes/modules/*.py*
-%attr(0644, root, root) %{_libdir}/python2.7/site-packages/qubes/modules/qubes-appvm-firewall
+%attr(0644, root, root) %{python_sitearch}/qubes/modules/*.py*
+%attr(0644, root, root) %{python_sitearch}/qubes/modules/qubes-appvm-firewall
 %doc README.md TODO
 
 %changelog
