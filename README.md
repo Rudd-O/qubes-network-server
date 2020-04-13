@@ -1,11 +1,11 @@
-#Qubes network server
+# Qubes network server
 
 This software lets you turn your [Qubes OS](https://www.qubes-os.org/) machine into a network server, enjoying all the benefits of Qubes OS (isolation, secure inter-VM process communication, ease of use) with none of the drawbacks of setting up your own Xen server.
 
 **Note**: this software only supports release 3 of Qubes OS.  For Qubes OS release 4.0 support,
 please see `r4.0` branch.  Release 4.1 is on the works.
 
-##Why?
+## Why?
 
 Qubes OS is a magnificent operating system, but there are so many use cases that its networking model cannot crack:
 
@@ -22,7 +22,7 @@ Qubes OS is a magnificent operating system, but there are so many use cases that
 * Anything that involves a secure server, serving data to people or
   machines, simply cannot be done under vanilla Qubes OS.
 
-##Enhanced networking model
+## Enhanced networking model
 
 The traditional Qubes OS networking model contemplates a client-only
 use case.  User VMs (AppVMs or StandaloneVMs) are attached to ProxyVMs,
@@ -54,7 +54,7 @@ exactly the same Qubes OS user experience you are used to.
 This is all, of course, opt-in, so the standard Qubes OS network security
 model remains in effect until you decide to share network servers.
 
-##How to use this software
+## How to use this software
 
 Once installed (see below), usage of the software is straightforward.
 Here are documents that will help you take advantage of Qubes
