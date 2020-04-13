@@ -1,0 +1,13 @@
+[Unit]
+Description=Configure the network to allow network server VMs
+Documentation=https://github.com/Rudd-O/qubes-network-server
+ConditionPathExists=/var/run/qubes-service/qubes-firewall
+After=qubes-firewall.service
+BindsTo=qubes-firewall.service
+
+[Service]
+Type=notify
+ExecStart=@SBINDIR@/qubes-routing-manager
+
+[Install]
+WantedBy=multi-user.target

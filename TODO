@@ -1,37 +1,13 @@
 To do list:
 
-* Make the system do the right thing (withdraw ip neigh /
-  ip route / iptables rules) when VMs power off or when
-  their network gets detached.
-  Right now the rules are only reconfigured when:
-  * a VM starts (ancestor VMs get reconfigured)
-  * a VM gets unpaused (same as before)
-  * a VM network gets attached (same as before)
-  * a VM's FW rules get altered (parent ProxyVM and sibling
-    VMs get reconfigured, and this reconfiguration only
-    affects iptables rules)
-* Make the system do the right thing when `static_ip`
-  is changed / enabled / disabled, without requiring a
-  VM restart.
-  * Key point (but not only point): appvm fwrules that
-    were setup need to be un-setup, which means that
-    our current algorithm "look at VMs with static_ip"
-    will not work to un-setup those fwrules.
-  * Define very clearly when fw state is modified
-    for appvm, as that requires execution of code
-    in the appvm, and tracking how and when to
-    undo that state transition.
-  * VM's entire IP and everything will be different,
-    and this setup only occurs during initial boot of the
-    VM, so it may be inevitable to force a restart of
-    the VM.  It depends on what kind of stuff depends on
-    the IP being set early on boot.  VM rounting tables,
-    ifconfig, stuff like ip neigh on the ancestor VMS,
-    firewall rules, et cetera.
-* Evaluate network access permissions when appvm
-  is attached to netvm, vs attached to proxyvm to netvm,
-  vs attached to proxyvm to proxyvm to netvm.
-* Prolly need to write some important automated tests.
-* Document entry points of the plugin that activate
-  code from the plugin, and under which circumstances / events
-  these pieces of code run.
+* Package up `dom0` component so it's installable via
+  RPM.  Alternatively, upstream it completely.
+* Make the system more robust by setting the right
+  `ip neigh / ip route` rules to force incoming traffic
+  to go to the specific VIF that backs the exposed VM.
+* Instead of / in addition to proxy ARP/NDP, use static
+  MAC addresses set at runtime, for each VM.
+* Support interposing ProxyVMs between NetVMs and AppVMs.
+* (Maybe) set up firewall rules on AppVM to obey its designated
+  firewall rules, bringing back support for the GUI.  This
+  probably needs a conversation with the Qubes OS core devs.
