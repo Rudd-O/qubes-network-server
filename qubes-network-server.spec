@@ -8,7 +8,7 @@ Release:        %{mybuildnumber}%{?dist}
 Summary:        Turn your Qubes OS into a network server
 BuildArch:      noarch
 
-License:        GPLv3+
+License:        GPLv2+
 URL:            https://github.com/Rudd-O/qubes-network-server
 Source0:        https://github.com/Rudd-O/%{name}/archive/{%version}.tar.gz#/%{name}-%{version}.tar.gz
 
