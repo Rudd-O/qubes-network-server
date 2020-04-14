@@ -1,5 +1,23 @@
+commit 88e88244d38a91ab0628ba2b6dad60ea692c14e0
+Author: Manuel Amador (Rudd-O) <rudd-o@rudd-o.com>
+Date:   Tue Apr 14 00:27:10 2020 +0000
+
+    AdminVM support for Qubes network server (release 4.1).
+    
+    These modifications create a new feature `routing-method` which defaults to the normal Qubes OS behavior of masquerading outgoing traffic from AppVMs.  When the `routing-method` feature is set on a VM, its value is written to a `/qubes-routing-method/<IP>` Qubes DB entry within its NetVM.
+    
+    NetVMs can thus use that information to switch from masquerading to normal IP forwarding for VMs designated with `routing-method=forward` by the administrator.
+    
+    Other than creating the necessary `/qubes-routing-method/<IP>` hierarchy in Qubes DB, this code does nothing else.
+    
+    This feature does not yet support chains of NetVMs -- only the NetVM directly attached to the AppVM is affected.
+    
+    To see the companion agent that uses this new Qubes DB information, please refer to branch `r4.0` of https://github.com/Rudd-O/qubes-network-server/tree/r4.0 .  The agent in that branch supports reading from the `/qubes-routing-method` tree to configure the NetVM appropriately.
+    
+    I am working, in parallel, on a Qubes OS >= 4.1.compatible implementation.
+
 diff --git a/qubes/vm/mix/net.py b/qubes/vm/mix/net.py
-index 129bc107..fac6ec52 100644
+index a5e3f0e5..d22b4ef3 100644
 --- a/qubes/vm/mix/net.py
 +++ b/qubes/vm/mix/net.py
 @@ -262,6 +262,8 @@ class NetVMMixin(qubes.events.Emitter):
@@ -24,7 +42,7 @@ index 129bc107..fac6ec52 100644
 +            event, feature,
 +            value=None, oldvalue=None
 +    ):
-+        # pylint: disable=no-self-use,unused-argument
++        # pylint: disable=unused-argument
 +        if self.netvm:
 +            self.netvm.reload_routing_for_vm(self)
 +
@@ -96,7 +114,19 @@ index 129bc107..fac6ec52 100644
      def set_mapped_ip_info_for_vm(self, vm):
          '''
          Set configuration to possibly hide real IP from the VM.
-@@ -451,6 +510,7 @@ class NetVMMixin(qubes.events.Emitter):
+@@ -467,6 +526,11 @@ class NetVMMixin(qubes.events.Emitter):
+             self.create_qdb_entries()
+             self.attach_network()
+ 
++            if oldvalue is not None and oldvalue.is_running():
++                # Delete now obsolete IP from the
++                # attached NetVM.
++                oldvalue.reload_routing_for_vm(self)
++
+             newvalue.fire_event('net-domain-connect', vm=self)
+ 
+     @qubes.events.handler('net-domain-connect')
+@@ -474,6 +538,7 @@ class NetVMMixin(qubes.events.Emitter):
          ''' Reloads the firewall config for vm '''
          # pylint: disable=unused-argument
          self.reload_firewall_for_vm(vm)
@@ -104,19 +134,20 @@ index 129bc107..fac6ec52 100644
  
      @qubes.events.handler('domain-qdb-create')
      def on_domain_qdb_create(self, event):
-@@ -461,6 +521,7 @@ class NetVMMixin(qubes.events.Emitter):
-                 # keep in sync with on_firewall_changed
+@@ -486,6 +551,7 @@ class NetVMMixin(qubes.events.Emitter):
+             if vm.is_running():
                  self.set_mapped_ip_info_for_vm(vm)
                  self.reload_firewall_for_vm(vm)
 +                self.reload_routing_for_vm(vm)
  
      @qubes.events.handler('firewall-changed', 'domain-spawn')
      def on_firewall_changed(self, event, **kwargs):
-@@ -469,6 +530,7 @@ class NetVMMixin(qubes.events.Emitter):
+@@ -494,7 +560,7 @@ class NetVMMixin(qubes.events.Emitter):
          if self.is_running() and self.netvm:
+             self.netvm.reload_connected_ips()
              self.netvm.set_mapped_ip_info_for_vm(self)
-             self.netvm.reload_firewall_for_vm(self)  # pylint: disable=no-member
-+            self.netvm.reload_routing_for_vm(self)  # pylint: disable=no-member
+-            self.netvm.reload_firewall_for_vm(self)  # pylint: disable=no-member
++            self.netvm.reload_firewall_for_vm(self)
  
      # CORE2: swallowed get_firewall_conf, write_firewall_conf,
      # get_firewall_defaults
