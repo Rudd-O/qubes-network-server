@@ -6,3 +6,6 @@ pkgs/
 *.tar.gz
 *.rpm
 .*.swp
+build
+*.egg-info
+src/*.service
