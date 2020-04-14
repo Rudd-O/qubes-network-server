@@ -5,8 +5,7 @@ a network server, enjoying all the benefits of Qubes OS (isolation, secure
 inter-VM process communication, ease of use) with none of the drawbacks
 of setting up your own Xen server.
 
-This release is only intended for use with Qubes OS 4.0.  Newer or older Qubes OS releases
-will not support it.
+**Note**: This branch is obsolete.  Refer to the `master` branch.
 
 ## Why?
 
