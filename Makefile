@@ -2,6 +2,7 @@ SBINDIR=/usr/local/sbin
 UNITDIR=/etc/systemd/system
 DESTDIR=
 PROGNAME=qubes-network-server
+PYTHON=/usr/bin/python3
 
 all: src/qubes-routing-manager.service
 
@@ -32,8 +33,10 @@ rpm: dist
 
 install-template: all
 	install -Dm 755 src/qubes-routing-manager -t $(DESTDIR)/$(SBINDIR)/
+	sed -i "s,^#!.*,#!$(PYTHON)," $(DESTDIR)/$(SBINDIR)/qubes-routing-manager
 	install -Dm 644 src/qubes-routing-manager.service -t $(DESTDIR)/$(UNITDIR)/
 
+# Python 3 is always used for Qubes admin package.
 install-dom0:
 	PYTHONDONTWRITEBYTECODE=1 python3 setup.py install $(PYTHON_PREFIX_ARG) -O0 --root $(DESTDIR)
 
