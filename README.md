@@ -1,9 +1,12 @@
 # Qubes network server
 
-This software lets you turn your [Qubes OS](https://www.qubes-os.org/) machine into a network server, enjoying all the benefits of Qubes OS (isolation, secure inter-VM process communication, ease of use) with none of the drawbacks of setting up your own Xen server.
+This software lets you turn your [Qubes OS 4.0](https://www.qubes-os.org/) machine into
+a network server, enjoying all the benefits of Qubes OS (isolation, secure
+inter-VM process communication, ease of use) with none of the drawbacks
+of setting up your own Xen server.
 
-**Note**: this software only supports release 3 of Qubes OS.  For Qubes OS release 4.0 support,
-please see `r4.0` branch.  For Qubes OS release 4.1 support, please see `r4.1 branch`.
+**Note**: this software only supports release 4.0 of Qubes OS.  For Qubes OS release 3.2 support,
+please see `release-3.2` branch.  For Qubes OS release 4.1 support, please see `r4.1 branch`.
 
 ## Why?
 
@@ -47,59 +50,123 @@ Qubes network server changes all that.
 With the Qubes network server software, it becomes possible to make
 network servers in user VMs available to other machines, be them
 peer VMs in the same Qubes OS system or machines connected to
-a physical link shared by a NetVM.  You get actual, full, GUI control
-over network traffic, both exiting the VM and entering the VM, with
-exactly the same Qubes OS user experience you are used to.
+a physical link shared by a NetVM.  Those network server VMs also
+obey the Qubes OS outbound firewall rules controls, letting you run
+services with outbound connections restricted.
 
 This is all, of course, opt-in, so the standard Qubes OS network security
-model remains in effect until you decide to share network servers.
+model remains in effect until you decide to enable the feature on any
+particular VM.
+
+The only drawback of this method is that it requires you to attach
+VMs meant to be exposed to the network directly to a NetVM, rather than
+through a ProxyVM.  VMs exposed through a ProxyVM will not be visible
+to machines on the same network as the NetVM.
 
 ## How to use this software
 
 Once installed (see below), usage of the software is straightforward.
-Here are documents that will help you take advantage of Qubes
-network server:
+
+These sample instructions assume you already have an AppVM VM set up,
+named `testvm`, and that your `sys-net` VM is attached to a network with
+subnet `192.168.16.0/24`.
+
+First, attach the VM you want to expose to the network
+to a NetVM that has an active network connection:
+
+`qvm-prefs -s testvm netvm sys-net`
+
+Then, set an IP address on the VM:
+
+`qvm-prefs -s testvm ip 192.168.16.25`
+
+(The step above requires you restart the `testvm` VM if it was running.)
+
+Then, to enable the network server feature for your `testvm` VM, all you have
+to do in your AdminVM (`dom0`) is run the following command:
+
+`qvm-features testvm routing-method forward`
+
+Now `testvm` is exposed to the network with address `192.168.16.25`, as well
+as to other VMs attached to `NetVM`.
+
+Do note that `testvm` will have the standard Qubes OS firewall rules stopping
+inbound traffic.  To solve that issue, you can
+[use the standard `rc.local` Qubes OS mechanism to alter the firewall rules](https://www.qubes-os.org/doc/firewall/#where-to-put-firewall-rules)
+in your `testvm` AppVM.
+
+Here are documents that will help you take advantage of Qubes network server:
 
 * [Setting up your first server](doc/Setting up your first server.md)
 * [Setting up an SSH server](doc/Setting up an SSH server.md)
 
-
 ## Installation
 
-Installation is straightforward — build package, copy to dom0,
-install in dom0.  Here are step by step instructions:
+Installation consists of two steps:
 
-* Install the `rpm-build` package on your build machine
-  with `sudo dnf install rpm-build`.  Remember that if your
-  build machine is an AppVM or any other sort of VM that boots
-  from a template, you may want to run that `dnf` command on the
-  template, rather than the build machine, and then power off
-  the template, followed by rebooting the build machine.
-* Clone the repository for this program to your build machine.
-* In your build machine, prepare an RPM with the `make rpm`
-  command on the local directory of your clone.  This creates a file
-  `qubes-network-server-*-noarch.rpm` on that directory.
-* Copy the prepared RPM to the dom0 of your Qubes OS machine.
-* Install the RPM in the dom0 with
-  `rpm -ivh <RPM file name you just copied>`.
-* Restart Qubes Manager, if it is running: right-click on its
-  notification icon, select *Exit*, then relaunch it from the
-  *System* submenu of your Qubes OS application menu.
+1. Deploy the `qubes-core-admin-addon-network-server` RPM to your `dom0`.
+2. Deploy the `qubes-network-server` RPM to the TemplateVM backing your
+   NetVM (which must be a Fedora instance).  If your NetVM is a StandaloneVM,
+   then you must deploy this RPM to the NetVM directly.
 
-Qubes OS does not provide any facility to copy files from
-a VM to the dom0.  To work around this, you can use `qvm-run`:
+After that, to make it all take effect:
+
+1. Power off the TemplateVM.
+2. Reboot the NetVM.
+
+You're done.  You can verify that the necessary component is running by launching
+a terminal in your NetVM, then typing the following:
 
 ```
-qvm-run --pass-io vmwiththerpm 'cat /home/user/path/to/qubes-network-server*rpm' > qns.rpm
+systemctl status qubes-routing-manager.service
 ```
 
-This lets you fetch the RPM file to the dom0, and save it as `qns.rpm`,
-which you can then feed as an argument to the `rpm -ivh` command.
+The routing manager should show as `enabled` and `active` in the terminal output.
+
+### How to build the packages to install
+
+You will first build the `qubes-core-admin-addon-network-server` RPM.
+
+To build this package, you will need to use a `chroot` jail containing
+a Fedora installation of the exact same release as your `dom0` (Fedora 25
+for Qubes release 4.0, Fedora 31 for Qubes release 4.1).
+
+Copy the source of the package to your `chroot`.  Then start a shell in
+your `chroot`, and type `make rpm`.  You may have to install some packages
+in your `chroot` -- use `dnf install git rpm-build make coreutils tar gawk findutils systemd systemd-rpm-macros`
+to get the minimum dependency set installed.
+
+Once built, in the source directory you will find the RPM built for the
+exact release of Qubes you need.
+
+Alternatively, you may first create a source RPM using `make srpm` on your
+regular workstation, then use `mock` to rebuild the source RPM produced
+in the source directory, using a Fedora release compatible with your `dom0`.
+
+To build the `qubes-network-server` RPM, you can use a DisposableVM running
+the same Fedora release as your NetVM.  Build said package as follows:
+
+```
+# Dependencies
+dnf install git rpm-build make coreutils tar gawk findutils systemd systemd-rpm-macros
+# Source code
+cd /path/to/qubes-network-server
+# <make sure you are in the correct branch now>
+make rpm
+```
+
+The process will output a `qubes-network-server-*.noarch.rpm` in the
+directory where it ran.  Fish it out and save it into the VM where you'll
+install it.
+
+You can power off the DisposableVM now.
 
 ### Upgrading to new / bug-fixing releases
 
-Follow the same procedures as above, but when asked to install the package
+Follow the same procedures as above, but when asked to install the packages
 with `rpm -ivh`, change it to `rpm -Uvh` (uppercase U for upgrade).
+
+Always restart your NetVMs between upgrades.
 
 ## Theory of operation
 
@@ -107,42 +174,65 @@ Qubes OS relies on layer 3 (IP) routing.  VMs in its networked tree send traffic
 their default route interfaces, which upstream VMs receive and masquerade out of their own
 default route interfaces.
 
-Qubes network server slightly changes this when a networked VM — a VM which has had its
-`static_ip` attribute set with `qvm-static-ip` — exists on the networked tree.  As soon
-as a networked VM boots up, Qubes network server:
+Qubes network server slightly changes this when a VM gets its `routing-method` feature set
+to `forward`.  As soon as the feature is enabled with that value, or the VM in question
+boots up, Qubes network server:
 
-* sets a static `/32` route on every upstream VM to the networked VM's static IP,
-  directing the upstream VMs to route traffic for that IP to their VIFs where
-  they may find the networked VM
-* enables ARP neighbor proxying for the static IP on every upstream VM, such that
-  every upstream VM announces itself to their own upstream VMs (and LAN, in the
-  case of NetVMs) as the networked VM 
-* sets firewall rules on every upstream VM that allow normal non-masquerading forwarding
-  to and from the IP of the networked VM
-* (depending on the Qubes firewall policy of the networked VM) sets rules on every
-  upstream ProxyVM that allow for certain classes of inbound traffic
-* (depending on the Qubes firewall policy of the networked VM) sets rules directly
-  on the networked VM that allow for certain classes of inbound traffic
+* enables ARP neighbor proxying (and, if using IPv6, NDP neighbor proxying) in the NetVM
+* sets firewall rules in the NetVM that neuter IP masquerading on traffic coming from
+  the networked VM
+* sets firewall rules in the NetVM that allow traffic from other VMs to reach the
+  networked VM, neutering the default Qubes OS rule that normally prohibits this
 
-The end result is instantaneous networking — machines upstream from the networked VM,
-including machines in the physical LAN, can "see", ping, and connect to the networked
-VM, provided that the firewall policy permits it.  You do not need to set up any
-special host-only routes on machines trying to access your networked VM — provided
-that the static IP is on the same routable subnet as its upstream VM's, Qubes
-network server does its magic automatically.
+The above have the effect of exposing the networked VM to:
 
-Of course, LAN machines connecting to the networked VM believe that the networked VM
-possesses the MAC address of its upstream NetVM (just as if the upstream NetVM had a
-second IP address and was serving traffic from it), but in reality, that is just an
-illusion created by Qubes network server.  This does have implications for your own
-network security policy, in that the networked VM appears (from a MAC perspective)
-to share a network card with its upstream NetVM.
+* other AppVMs attached to the same NetVM
+* other machines attached to the same physical network the NetVM is attached to
+
+Now all machines in the same LAN will be able to reach the networked VM.
+Here is a step-by-step explanation of how IP traffic to and from the networked
+VM happens, when the `routing-method` is set to `forward` on the networked VM:
+
+1. Machine in LAN asks for the MAC address of the networked VM's IP address.
+2. NetVM sees the ARP/NDP request and responds by proxying it to the networked VM.
+3. Networked VM replies to the ARP/NDP request back to the NetVM.
+4. NetVM relays the ARP/NDP reply back to the network, but substitutes its own
+   MAC address in the reply.
+5. Machine in LAN sends local IP packet to the IP of the networked VM's IP address,
+   but destined to the MAC address of the NetVM.
+6. The NetVM sees the IP packet, and routes it to the networked VM.
+7. The Networked VM receives the IP packet.
+8. If the networked VM needs to respond, it sends an IP packet back to the
+   machine in LAN.
+9. NetVM notices packet comes from the networked VM, and instead of masquerading it,
+   it lets the packet through unmodified, with the source IP address of the
+   networked VM.
+
+The end result is practical networking with no need to set up routing tables on
+machines attempting to access the networked VM.
+
+Of course, if you want machines in the LAN to have access to the networked VM, you
+must still set an appropriate `ip` preference on the networked VM.  For example, if
+your physical LAN had subnet `1.2.3.0/24`, and you want machines in your physical LAN
+to connect to a networked VM, you must set the `ip` preference of the networked VM
+to a previously-unused IP within the range `1.2.3.1` and `1.2.3.255`.  Failing that,
+you must assign a host-specific route on the source machine which uses the NetVM
+as the gateway, and uses the IP address of the networked VM (see `qvm-prefs` output)
+as the destination address.
 
 ## Limitations
 
 * HVMs are not supported at all at this time.  This will change over time, and
   you can help it change faster by submitting a pull request with HVM support.
+* Interposing a ProxyVM between a networked VM and the NetVM is not currently
+  supported.  This is implementable in principle, but would require a recursive
+  walk that encompasses the entire network link from NetVM through intermediate
+  ProxyVMs.
 
 ## Troubleshooting
 
-The actions that the network server software performs are logged to the journal of each of the involved VMs.  Generally, for each VM that has its own `static_ip` address set, this software will perform actions on that VM, on its parent ProxyVM, and on its grandparent NetVM.  In case of problems, tailing the journal (`sudo journalctl -b`) on those three VMs simultaneously can be extremely useful to figure out what is going on.
+The actions that the `qubes-routing-manager` service performs are logged to the journal
+of the NetVM where the `qubes-routing-manager` service is running.
+
+In case of problems, tailing the journal (`sudo journalctl -fa`) on the NetVM will be
+extremely useful to figure out what the problem is.

@@ -1,23 +1,43 @@
-BINDIR=/usr/bin
-LIBDIR=/usr/lib64
+SBINDIR=/usr/local/sbin
+UNITDIR=/etc/systemd/system
 DESTDIR=
 PROGNAME=qubes-network-server
+PYTHON=/usr/bin/python3
+
+all: src/qubes-routing-manager.service
+
+src/qubes-routing-manager.service: src/qubes-routing-manager.service.in
+	sed 's|@SBINDIR@|$(SBINDIR)|g' < $< > $@
+
+ROOT_DIR := $(shell dirname $(realpath $(firstword $(MAKEFILE_LIST))))
+
+.PHONY: clean dist rpm srpm install-template install-dom0
 
 clean:
-	find -name '*.pyc' -o -name '*~' -print0 | xargs -0 rm -f
-	rm -f *.tar.gz *.rpm
+	cd $(ROOT_DIR) || exit $$? ; find -name '*.pyc' -o -name '*~' -print0 | xargs -0 rm -f
+	cd $(ROOT_DIR) || exit $$? ; rm -rf *.tar.gz *.rpm
+	cd $(ROOT_DIR) || exit $$? ; rm -rf *.egg-info build
 
 dist: clean
-	excludefrom= ; test -f .gitignore && excludefrom=--exclude-from=.gitignore ; DIR=$(PROGNAME)-`awk '/^Version:/ {print $$2}' $(PROGNAME).spec` && FILENAME=$$DIR.tar.gz && tar cvzf "$$FILENAME" --exclude="$$FILENAME" --exclude=.git --exclude=.gitignore $$excludefrom --transform="s|^|$$DIR/|" --show-transformed *
-
-rpm: dist
-	@which rpmbuild || { echo 'rpmbuild is not available.  Please install the rpm-build package with the command `dnf install rpmbuild` to continue, then rerun this step.' ; exit 1 ; }
-	T=`mktemp -d` && rpmbuild --define "_topdir $$T" -ta $(PROGNAME)-`awk '/^Version:/ {print $$2}' $(PROGNAME).spec`.tar.gz || { rm -rf "$$T"; exit 1; } && mv "$$T"/RPMS/*/* "$$T"/SRPMS/* . || { rm -rf "$$T"; exit 1; } && rm -rf "$$T"
+	@which rpmspec || { echo 'rpmspec is not available.  Please install the rpm-build package with the command `dnf install rpm-build` to continue, then rerun this step.' ; exit 1 ; }
+	cd $(ROOT_DIR) || exit $$? ; excludefrom= ; test -f .gitignore && excludefrom=--exclude-from=.gitignore ; DIR=`rpmspec -q --queryformat '%{name}-%{version}\n' *spec | head -1` && FILENAME="$$DIR.tar.gz" && tar cvzf "$$FILENAME" --exclude="$$FILENAME" --exclude=.git --exclude=.gitignore $$excludefrom --transform="s|^|$$DIR/|" --show-transformed *
 
 srpm: dist
-	T=`mktemp -d` && rpmbuild --define "_topdir $$T" -ts $(PROGNAME)-`awk '/^Version:/ {print $$2}' $(PROGNAME).spec`.tar.gz || { rm -rf "$$T"; exit 1; } && mv "$$T"/SRPMS/* . || { rm -rf "$$T"; exit 1; } && rm -rf "$$T"
+	@which rpmbuild || { echo 'rpmbuild is not available.  Please install the rpm-build package with the command `dnf install rpm-build` to continue, then rerun this step.' ; exit 1 ; }
+	cd $(ROOT_DIR) || exit $$? ; rpmbuild --define "_srcrpmdir ." -ts `rpmspec -q --queryformat '%{name}-%{version}.tar.gz\n' *spec | head -1`
 
-install:
-	install -Dm 755 src/usr/bin/qvm-static-ip -t $(DESTDIR)/$(BINDIR)/
-	install -Dm 644 src/usr/lib64/python2.7/site-packages/qubes/modules/*.py -t $(DESTDIR)/$(LIBDIR)/python2.7/site-packages/qubes/modules
-	install -Dm 644 src/usr/lib64/python2.7/site-packages/qubes/modules/qubes-appvm-firewall -t $(DESTDIR)/$(LIBDIR)/python2.7/site-packages/qubes/modules
+rpm: dist
+	@which rpmbuild || { echo 'rpmbuild is not available.  Please install the rpm-build package with the command `dnf install rpm-build` to continue, then rerun this step.' ; exit 1 ; }
+	cd $(ROOT_DIR) || exit $$? ; rpmbuild --define "_srcrpmdir ." --define "_rpmdir builddir.rpm" -ta `rpmspec -q --queryformat '%{name}-%{version}.tar.gz\n' *spec | head -1`
+	cd $(ROOT_DIR) ; mv -f builddir.rpm/*/* . && rm -rf builddir.rpm
+
+install-template: all
+	install -Dm 755 src/qubes-routing-manager -t $(DESTDIR)/$(SBINDIR)/
+	sed -i "s,^#!.*,#!$(PYTHON)," $(DESTDIR)/$(SBINDIR)/qubes-routing-manager
+	install -Dm 644 src/qubes-routing-manager.service -t $(DESTDIR)/$(UNITDIR)/
+
+# Python 3 is always used for Qubes admin package.
+install-dom0:
+	PYTHONDONTWRITEBYTECODE=1 python3 setup.py install $(PYTHON_PREFIX_ARG) -O0 --root $(DESTDIR)
+
+install: install-dom0 install-template
