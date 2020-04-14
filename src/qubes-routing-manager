@@ -1,4 +1,4 @@
-#!/usr/bin/python2
+#!/usr/bin/python3
 
 '''
 This program reads the /qubes-firewall/{ip}/qubes-routing-method file
@@ -42,7 +42,7 @@ class AdjunctWorker(object):
         def run_ipt(*args):
             return subprocess.check_call([cmd, '-w'] + list(args))
 
-        out = subprocess.check_output([cmd + '-save']).splitlines()
+        out = subprocess.check_output([cmd + '-save', '-w'], universal_newlines=True).splitlines()
 
         if enable:
             # Create necessary prerouting chain.

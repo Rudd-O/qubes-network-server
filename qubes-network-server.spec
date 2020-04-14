@@ -5,7 +5,7 @@
 %define mybuildnumber %{?build_number}%{?!build_number:1}
 
 Name:           qubes-network-server
-Version:        0.0.11
+Version:        0.0.12
 Release:        %{mybuildnumber}%{?dist}
 Summary:        Turn your Qubes OS into a network server
 BuildArch:      noarch
@@ -22,10 +22,9 @@ BuildRequires:  findutils
 BuildRequires:  systemd
 BuildRequires:  systemd-rpm-macros
 
-Requires:       qubes-core-agent-networking >= 4.0.51-1
-Requires:       qubes-core-agent-networking < 4.1
-Requires:       python2
-Requires:       python2-qubesdb
+Requires:       qubes-core-agent-networking >= 4.1
+Requires:       python3
+Requires:       python3-qubesdb
 
 %description
 This package lets you turn your Qubes OS into a network server.
