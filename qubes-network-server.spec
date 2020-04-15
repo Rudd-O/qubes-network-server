@@ -16,7 +16,7 @@ BuildRequires:  make
 BuildRequires:  coreutils
 BuildRequires:  tar
 BuildRequires:  findutils
-%if 1%{?fc30} == 11
+%if 0%{?fedora} < 31
 BuildRequires:  python2
 BuildRequires:  python2-rpm-macros
 %global pythoninterp %{_bindir}/python2
@@ -26,7 +26,7 @@ BuildRequires:  python3-rpm-macros
 %global pythoninterp %{_bindir}/python3
 %endif
 
-%if 1%{?fc25} == 1
+%if 0%{?fedora} > 29
 BuildRequires:  systemd-rpm-macros
 %else
 %global _presetdir %{_prefix}/lib/systemd/system-preset
@@ -55,6 +55,7 @@ BuildRequires:  tar
 BuildRequires:  findutils
 BuildRequires:  python3
 BuildRequires:  python3-rpm-macros
+BuildRequires:  python3-setuptools
 
 Requires:       python3
 Requires:       qubes-core-dom0 >= 4.0.49-1
@@ -102,17 +103,17 @@ echo 'enable qubes-routing-manager.service' > "$RPM_BUILD_ROOT"/%{_presetdir}/75
 %systemd_postun_with_restart qubes-routing-manager.service
 
 %post -n         qubes-core-admin-addon-network-server
-%if 1%{?fc25} == 11
-systemctl try-restart qubesd.service
-%else
+%if 0%{?fedora} > 29
 %systemd_post qubesd.service
+%else
+systemctl try-restart qubesd.service
 %endif
 
 %postun -n       qubes-core-admin-addon-network-server
-%if 1%{?fc25} == 11
-systemctl try-restart qubesd.service
-%else
+%if 0%{?fedora} > 29
 %systemd_postun_with_restart qubesd.service
+%else
+systemctl try-restart qubesd.service
 %endif
 
 %changelog
