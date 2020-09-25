@@ -18,6 +18,10 @@ import subprocess
 import qubesdb
 
 
+def _s(v):
+    if isinstance(v, bytes):
+        return v.decode("utf-8")
+    return v
 
 
 FORWARD_ROUTING_METHOD = "forward"
@@ -191,7 +195,7 @@ class AdjunctWorker(object):
 
     def handle_addr(self, addr):
         # Setup plain forwarding for this specific address.
-        routing_method = self.qdb.read('/qubes-routing-method/{}'.format(addr))
+        routing_method = _s(self.qdb.read("/qubes-routing-method/{}".format(addr)))
         self.setup_plain_forwarding_for_address(
             addr,
             routing_method == FORWARD_ROUTING_METHOD,
@@ -200,7 +204,8 @@ class AdjunctWorker(object):
 
         # Manipulate proxy ARP for all known addresses.
         methods = [
-            (k.split('/')[2], v) for k, v in self.qdb.multiread('/qubes-routing-method/').items()
+            (_s(k).split("/")[2], _s(v))
+            for k, v in self.qdb.multiread("/qubes-routing-method/").items()
         ]
         mmethods = {
             4: [m[1] for m in methods if not self.is_ip6(m[0])],
@@ -212,7 +217,7 @@ class AdjunctWorker(object):
             )
 
     def list_targets(self):
-        return set(t.split('/')[2] for t in self.qdb.list('/qubes-routing-method/'))
+        return set(_s(t).split("/")[2] for t in self.qdb.list("/qubes-routing-method/"))
 
     def sd_notify(self, state):
         """Send notification to systemd, if available"""
@@ -240,7 +245,8 @@ class AdjunctWorker(object):
             for watch_path in iter(self.qdb.read_watch, None):
                 # ignore writing rules itself - wait for final write at
                 # source_addr level empty write (/qubes-firewall/SOURCE_ADDR)
-                if watch_path.count('/') != 2:
+                watch_path = s(watch_path)
+                if watch_path.count("/") != 2:
                     continue
                 source_addr = watch_path.split("/")[2]
                 self.handle_addr(source_addr)
