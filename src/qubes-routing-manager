@@ -245,7 +245,7 @@ class AdjunctWorker(object):
             for watch_path in iter(self.qdb.read_watch, None):
                 # ignore writing rules itself - wait for final write at
                 # source_addr level empty write (/qubes-firewall/SOURCE_ADDR)
-                watch_path = s(watch_path)
+                watch_path = _s(watch_path)
                 if watch_path.count("/") != 2:
                     continue
                 source_addr = watch_path.split("/")[2]
