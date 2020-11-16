@@ -33,7 +33,7 @@ which give the user control over outbound connections taking place from
 user VMs.  ProxyVMs in turn attach to NetVMs, which provide outbound
 connectivity for ProxyVMs and other user VMs alike.
 
-![Standard Qubes OS network model](doc/Standard Qubes OS network model.png?raw=true "Standard Qubes OS network model")
+![Standard Qubes OS network model](./doc/Standard Qubes OS network model.png)
 
 No provision is made for running a server in a virtualized environment,
 such that the server's ports are accessible by (a) other VMs (b) machines
@@ -45,7 +45,7 @@ attack vectors.  The Qubes OS user interface provides no help either.
 
 Qubes network server changes all that.
 
-![Qubes network server model](doc/Qubes network server model.png?raw=true "Qubes network server model")
+![Qubes network server model](./doc/Qubes network server model.png)
 
 With the Qubes network server software, it becomes possible to make
 network servers in user VMs available to other machines, be them
