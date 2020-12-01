@@ -33,7 +33,7 @@ which give the user control over outbound connections taking place from
 user VMs.  ProxyVMs in turn attach to NetVMs, which provide outbound
 connectivity for ProxyVMs and other user VMs alike.
 
-![Standard Qubes OS network model](doc/Standard Qubes OS network model.png?raw=true "Standard Qubes OS network model")
+![Standard Qubes OS network model](./doc/Standard Qubes OS network model.png)
 
 No provision is made for running a server in a virtualized environment,
 such that the server's ports are accessible by (a) other VMs (b) machines
@@ -45,7 +45,7 @@ attack vectors.  The Qubes OS user interface provides no help either.
 
 Qubes network server changes all that.
 
-![Qubes network server model](doc/Qubes network server model.png?raw=true "Qubes network server model")
+![Qubes network server model](./doc/Qubes network server model.png)
 
 With the Qubes network server software, it becomes possible to make
 network servers in user VMs available to other machines, be them
@@ -102,97 +102,20 @@ Here are documents that will help you take advantage of Qubes network server:
 
 ## Installation
 
-Installation consists of two steps.
+Installation consists of two steps:
 
-### Apply software patch to `dom0`
+1. Deploy the `qubes-core-admin-addon-network-server` RPM to your `dom0`.
+2. Deploy the `qubes-network-server` RPM to the TemplateVM backing your
+   NetVM (which must be a Fedora instance).  If your NetVM is a StandaloneVM,
+   then you must deploy this RPM to the NetVM directly.
 
-The first step is to apply a patch to your Qubes OS `dom0`.
-The patch is distributed in the source, within the `src/` directory.
-Future releases of this software will contain a better method for
-deploying the `dom0` part of the software.
+After that, to make it all take effect:
 
-Copy the patch to your `dom0` somehow, then apply it:
+1. Power off the TemplateVM.
+2. Reboot the NetVM.
 
-```
-# Change into the Python 3.5 site-packages directory.
-cd /usr/lib/python3.5/site-packages
-
-# Back up your `net.py` file.
-if ! test -f qubes/vm/mix/net.py.bak
-  sudo cp qubes/vm/mix/net.py qubes/vm/mix/net.py.bak
-fi
-
-# Patch the `net.py` file.
-sudo patch -p1 < /home/user/qubes-network-server-dom0.patch
-
-# Restart qubesd.
-sudo systemctl restart qubesd.service
-```
-
-You can now verify that `qubesd` is running:
-
-```
-sudo systemctl status qubesd.service | cat
-```
-
-#### Restoring from backup in case of failed installation.
-
-If `qubesd` has failed for some reason, you can restore
-from the backup and restart again.  This will nullify
-the changes you made in this routine.  To restore from
-the backup, use the following commands:
-
-```
-udo cp qubes/vm/mix/net.py.bak qubes/vm/mix/net.py
-sudo systemctl restart qubesd.service
-```
-
-### Install the agent in the TemplateVM
-
-The second step is to build and install the component that goes
-in the TemplateVM that your NetVM (typically `sys-net` uses).
-If your NetVM is a StandaloneVM, you should modify these instructions
-to install the component directly in the NetVM, as in this case
-your NetVM does not instantiation from a Qubes template.
-
-Within a DisposableVM, build said package as follows:
-
-```
-# Dependencies
-dnf install git rpm-build make coreutils tar gawk findutils systemd systemd-rpm-macros
-# Source code
-git clone https://github.com/Rudd-O/qubes-network-server
-# <make sure you are in the correct branch now>
-cd qubes-network-server
-make rpm
-```
-
-The process will output a `qubes-network-server-*.noarch.rpm` in the
-directory where it ran.  Copy that RPM to your TemplateVM.  Here is
-a trick to do that from `dom0`, which fetchs the RPM file from the DisposableVM
-and saves it within the TemplateVM, which you can then feed as an argument
-to the `rpm -ivh` command:
-
-```
-qvm-run --pass-io disp8474 'cat /home/user/qubes-network-server/qubes-network-server*.noarch.rpm' | \
-   qvm-run --pass-io fedora-30 'cat > qns.rpm'
-```
-
-You can power off the DisposableVM now.
-
-Now you can install this package in your TemplateVM (or NetVM, if it is a StandaloneVM):
-
-```
-# (In TemplateVM)
-# rpm -ivh qns.rpm
-```
-
-Now power off both your TemplateVM and your NetVM.
-
-Then start your NetVM back up.
-
-You can verify that the necessary component is running by launching a terminal
-in your NetVM, then typing the following:
+You're done.  You can verify that the necessary component is running by launching
+a terminal in your NetVM, then typing the following:
 
 ```
 systemctl status qubes-routing-manager.service
@@ -200,10 +123,50 @@ systemctl status qubes-routing-manager.service
 
 The routing manager should show as `enabled` and `active` in the terminal output.
 
+### How to build the packages to install
+
+You will first build the `qubes-core-admin-addon-network-server` RPM.
+
+To build this package, you will need to use a `chroot` jail containing
+a Fedora installation of the exact same release as your `dom0` (Fedora 25
+for Qubes release 4.0, Fedora 31 for Qubes release 4.1).
+
+Copy the source of the package to your `chroot`.  Then start a shell in
+your `chroot`, and type `make rpm`.  You may have to install some packages
+in your `chroot` -- use `dnf install git rpm-build make coreutils tar gawk findutils systemd systemd-rpm-macros`
+to get the minimum dependency set installed.
+
+Once built, in the source directory you will find the RPM built for the
+exact release of Qubes you need.
+
+Alternatively, you may first create a source RPM using `make srpm` on your
+regular workstation, then use `mock` to rebuild the source RPM produced
+in the source directory, using a Fedora release compatible with your `dom0`.
+
+To build the `qubes-network-server` RPM, you can use a DisposableVM running
+the same Fedora release as your NetVM.  Build said package as follows:
+
+```
+# Dependencies
+dnf install git rpm-build make coreutils tar gawk findutils systemd systemd-rpm-macros
+# Source code
+cd /path/to/qubes-network-server
+# <make sure you are in the correct branch now>
+make rpm
+```
+
+The process will output a `qubes-network-server-*.noarch.rpm` in the
+directory where it ran.  Fish it out and save it into the VM where you'll
+install it.
+
+You can power off the DisposableVM now.
+
 ### Upgrading to new / bug-fixing releases
 
-Follow the same procedures as above, but when asked to install the package
+Follow the same procedures as above, but when asked to install the packages
 with `rpm -ivh`, change it to `rpm -Uvh` (uppercase U for upgrade).
+
+Always restart your NetVMs between upgrades.
 
 ## Theory of operation
 
