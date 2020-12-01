@@ -10,7 +10,8 @@ please see `release-3.2` branch.  For Qubes OS release 4.1 support, please see `
 
 ## Why?
 
-Qubes OS is a magnificent operating system, but there are so many use cases that its networking model cannot crack:
+Qubes OS is a magnificent operating system, but there are so many use cases that its networking
+model cannot crack:
 
 * As an automated integration testing system.  Qubes OS would be
   phenomenal for this, and its automation tools would make it
