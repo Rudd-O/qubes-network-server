@@ -90,7 +90,7 @@ echo 'enable qubes-routing-manager.service' > "$RPM_BUILD_ROOT"/%{_presetdir}/75
 %doc README.md TODO
 
 %files -n       qubes-core-admin-addon-network-server
-%attr(0644, root, root) %{python3_sitelib}/qubesnetworkserver
+%attr(0644, root, root) %{python3_sitelib}/qubesnetworkserver/*
 %{python3_sitelib}/qubesnetworkserver-*.egg-info
 
 %post
