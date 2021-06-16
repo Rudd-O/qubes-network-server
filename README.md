@@ -10,13 +10,9 @@ please see `release-3.2` branch.  For Qubes OS release 4.1 support, please see `
 
 ## Why?
 
-Qubes OS is a magnificent operating system, but there are so many use cases that its networking
-model cannot crack:
+Qubes OS is a magnificent operating system.  That said, there are many use cases its networking
+model does not work well for:
 
-* As an automated integration testing system.  Qubes OS would be
-  phenomenal for this, and its automation tools would make it
-  extremely easy to bring up and tear down entire environments.
-  If only those environments could network with each other securely!
 * Remote management of Qubes OS instances.  Vanilla Qubes OS cannot
   easily be managed remotely.  A better networking model would allow
   for orchestration tools — such as
@@ -25,8 +21,12 @@ model cannot crack:
   within each VM.
 * Anything that involves a secure server, serving data to people or
   machines, simply cannot be done under vanilla Qubes OS.
+* As an automated integration testing system.  Qubes OS would be
+  phenomenal for this, and its automation tools would make it
+  extremely easy to bring up and tear down entire environments.
+  If only those environments could network with each other securely!
 
-## Enhanced networking model
+### The traditional Qubes networking model
 
 The traditional Qubes OS networking model contemplates a client-only
 use case.  User VMs (AppVMs or StandaloneVMs) are attached to ProxyVMs,
@@ -44,7 +44,9 @@ for multiple VMs, which need to carefully override the existing firewall
 rules, and require careful thought not to open the system to unexpected
 attack vectors.  The Qubes OS user interface provides no help either.
 
-Qubes network server changes all that.
+### The Qubes network server networking model
+
+Qubes network server builds on that.
 
 ![Qubes network server model](./doc/Qubes network server model.png)
 
@@ -66,12 +68,18 @@ to machines on the same network as the NetVM.
 
 ## How to use this software
 
-Once installed (see below), usage of the software is straightforward.
+Once installed (**see below for installation instructions**), usage of
+the software is straightforward.
 
-These sample instructions assume you already have an AppVM VM set up,
-named `testvm`, and that your `sys-net` VM is attached to a network with
-subnet `192.168.16.0/24`.
+These sample instructions assume:
 
+* you understand the distinction between dom0 and qubes
+* you already have an AppVM VM set up, named `testvm`,
+* your `sys-net` VM is attached to a network with subnet `192.168.16.0/24`
+  — this, of course, may vary depending on your local router configuration.
+
+*Do not proceed any further if you do not yet meet these requirements.*
+  
 First, attach the VM you want to expose to the network
 to a NetVM that has an active network connection:
 
@@ -101,9 +109,9 @@ Here are documents that will help you take advantage of Qubes network server:
 * [Setting up your first server](doc/Setting up your first server.md)
 * [Setting up an SSH server](doc/Setting up an SSH server.md)
 
-## Installation
+## Installation of packages
 
-Installation consists of two steps:
+Package installation consists of two steps (**the package creation instructions are below**):
 
 1. Deploy the `qubes-core-admin-addon-network-server` RPM to your `dom0`.
 2. Deploy the `qubes-network-server` RPM to the TemplateVM backing your
