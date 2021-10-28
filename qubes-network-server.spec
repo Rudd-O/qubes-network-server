@@ -3,7 +3,7 @@
 %define mybuildnumber %{?build_number}%{?!build_number:1}
 
 Name:           qubes-network-server
-Version:        0.0.13
+Version:        0.0.16
 Release:        %{mybuildnumber}%{?dist}
 Summary:        Turn your Qubes OS into a network server
 BuildArch:      noarch
@@ -89,7 +89,7 @@ echo 'enable qubes-routing-manager.service' > "$RPM_BUILD_ROOT"/%{_presetdir}/75
 %doc README.md TODO
 
 %files -n       qubes-core-admin-addon-network-server
-%attr(0644, root, root) %{python3_sitelib}/qubesnetworkserver
+%attr(0644, root, root) %{python3_sitelib}/qubesnetworkserver/*
 %{python3_sitelib}/qubesnetworkserver-*.egg-info
 
 %post

@@ -5,13 +5,14 @@ is meant to be a standalone VM that contains files, being served by
 a running HTTP server (port 80) within it.  This VM is attached to a
 NetVM `sys-net`, with IP address `192.168.1.4` on a local network
 `192.168.1.0/24`.  Our goal will be to make `httpserver` accessible
-to your laptop on the same physical network, which we'll assume has
-IP address `192.168.1.8`.
+to your client laptop on the same physical network, which we'll
+assume has IP address `192.168.1.8`.
 
 ##Assign a static address
 
 First step is to assign an address — let's make it `192.168.1.6` —
-to `httpserver`:
+to `httpserver` (of course, you should make sure that this IP
+address isn't used by any other equipment in your network):
 
 ```
 qvm-prefs -s httpserver ip 192.168.1.6
