@@ -6,7 +6,7 @@ inter-VM process communication, ease of use) with none of the drawbacks
 of setting up your own Xen server.
 
 **Note**: this software only supports release 4.0 of Qubes OS.  For Qubes OS release 3.2 support,
-please see `release-3.2` branch.  For Qubes OS release 4.1 support, please see `r4.1 branch`.
+please see `release-3.2` branch.  For Qubes OS release 4.1 support, please see `master` branch.
 
 ## Why?
 
