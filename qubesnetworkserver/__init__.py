@@ -1,14 +1,25 @@
 import qubes.ext
-import qubes.vm.templatevm
 
+
+def l(text, *parms):
+    if parms:
+        text = text % parms
+    import sys
+    print("nsext:", text, file=sys.stderr)
+    sys.stderr.flush()
+
+
+l("loaded")
 
 class QubesNetworkServerExtension(qubes.ext.Extension):
 
     def shutdown_routing_for_vm(self, netvm, appvm):
+        l("shutdown routing for vm %s %s", netvm, appvm)
         self.reload_routing_for_vm(netvm, appvm, True)
 
     def reload_routing_for_vm(self, netvm, appvm, shutdown=False):
         '''Reload the routing method for the VM.'''
+        l("reload routing for vm %s %s shutdown %s", netvm, appvm, shutdown)
         if not netvm.is_running():
             return
         for addr_family in (4, 6):
@@ -36,6 +47,7 @@ class QubesNetworkServerExtension(qubes.ext.Extension):
         If `remove` is True, then we remove the respective routing method from
         the Qubes DB instead.
         '''
+        l("setup forwarding for vm vm %s %s %s remove %s", netvm, appvm, ip, remove)
         if ip is None:
             return
         routing_method = appvm.features.check_with_template(
@@ -60,6 +72,7 @@ class QubesNetworkServerExtension(qubes.ext.Extension):
             **kwargs
     ):
         # pylint: disable=no-self-use,unused-argument
+        l("routing method changed %s", vm)
         if 'oldvalue' not in kwargs or kwargs.get('oldvalue') != kwargs.get('value'):
             if vm.netvm:
                 self.reload_routing_for_vm(vm.netvm, vm)
@@ -68,12 +81,14 @@ class QubesNetworkServerExtension(qubes.ext.Extension):
     def on_domain_qdb_create(self, vm, event, **kwargs):
         ''' Fills the QubesDB with firewall entries. '''
         # pylint: disable=unused-argument
+        l("domain create %s %s", vm, event)
         if vm.netvm:
             self.reload_routing_for_vm(vm.netvm, vm)
 
     @qubes.ext.handler('domain-start')
     def on_domain_started(self, vm, event, **kwargs):
         # pylint: disable=unused-argument
+        l("domain started %s %s", vm, event)
         try:
             for downstream_vm in vm.connected_vms:
                 self.reload_routing_for_vm(vm, downstream_vm)
@@ -82,7 +97,8 @@ class QubesNetworkServerExtension(qubes.ext.Extension):
 
     @qubes.ext.handler('domain-shutdown')
     def on_domain_shutdown(self, vm, event, **kwargs):
-       # pylint: disable=unused-argument
+        # pylint: disable=unused-argument
+        l("domain shutdown %s %s", vm, event)
         try:
             for downstream_vm in self.connected_vms:
                 self.shutdown_routing_for_vm(vm, downstream_vm)
@@ -94,5 +110,6 @@ class QubesNetworkServerExtension(qubes.ext.Extension):
     @qubes.ext.handler('net-domain-connect')
     def on_net_domain_connect(self, vm, event):
         # pylint: disable=unused-argument
+        l("domain connect %s %s", vm, event)
         if vm.netvm:
             self.reload_routing_for_vm(vm.netvm, vm)

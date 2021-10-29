@@ -3,7 +3,7 @@
 %define mybuildnumber %{?build_number}%{?!build_number:1}
 
 Name:           qubes-network-server
-Version:        0.0.16
+Version:        0.0.17
 Release:        %{mybuildnumber}%{?dist}
 Summary:        Turn your Qubes OS into a network server
 BuildArch:      noarch
@@ -16,22 +16,10 @@ BuildRequires:  make
 BuildRequires:  coreutils
 BuildRequires:  tar
 BuildRequires:  findutils
-%if 0%{?fedora} < 31
-BuildRequires:  python2
-BuildRequires:  python2-rpm-macros
-%global pythoninterp %{_bindir}/python2
-%else
 BuildRequires:  python3
 BuildRequires:  python3-rpm-macros
-%global pythoninterp %{_bindir}/python3
-%endif
-
-%if 0%{?fedora} > 29
 BuildRequires:  systemd-rpm-macros
-%else
-%global _presetdir %{_prefix}/lib/systemd/system-preset
-%global _unitdir %{_prefix}/lib/systemd/system
-%endif
+%global pythoninterp %{_bindir}/python3
 
 Requires:       qubes-core-agent-networking >= 4.1
 Requires:       python3
@@ -57,8 +45,7 @@ BuildRequires:  python3-rpm-macros
 BuildRequires:  python3-setuptools
 
 Requires:       python3
-Requires:       qubes-core-dom0 >= 4.0.49-1
-Conflicts:      qubes-core-dom0 >= 4.1
+Requires:       qubes-core-dom0 >= 4.1
 
 %description -n qubes-core-admin-addon-network-server
 This package lets you turn your Qubes OS into a network server.  Install this
@@ -88,12 +75,12 @@ echo 'enable qubes-routing-manager.service' > "$RPM_BUILD_ROOT"/%{_presetdir}/75
 %config %attr(0644, root, root) %{_unitdir}/qubes-routing-manager.service
 %doc README.md TODO
 
-%files -n       qubes-core-admin-addon-network-server
+%files -n     qubes-core-admin-addon-network-server
 %attr(0644, root, root) %{python3_sitelib}/qubesnetworkserver/*
 %{python3_sitelib}/qubesnetworkserver-*.egg-info
 
 %post
-%systemd_post qubes-routing-manager.service
+%systemd_post  qubes-routing-manager.service
 
 %preun
 %systemd_preun qubes-routing-manager.service
@@ -101,19 +88,11 @@ echo 'enable qubes-routing-manager.service' > "$RPM_BUILD_ROOT"/%{_presetdir}/75
 %postun
 %systemd_postun_with_restart qubes-routing-manager.service
 
-%post -n         qubes-core-admin-addon-network-server
-%if 0%{?fedora} > 29
+%post -n      qubes-core-admin-addon-network-server
 %systemd_post qubesd.service
-%else
-systemctl try-restart qubesd.service
-%endif
 
-%postun -n       qubes-core-admin-addon-network-server
-%if 0%{?fedora} > 29
+%postun -n    qubes-core-admin-addon-network-server
 %systemd_postun_with_restart qubesd.service
-%else
-systemctl try-restart qubesd.service
-%endif
 
 %changelog
 * Mon Apr 13 2020 Manuel Amador (Rudd-O) <rudd-o@rudd-o.com>

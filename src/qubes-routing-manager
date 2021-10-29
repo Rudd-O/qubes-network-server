@@ -37,7 +37,7 @@ class AdjunctWorker(object):
 
     def setup_plain_forwarding_for_address(self, source, enable, family):
         def find_pos_of_first_rule(table, startswith):
-            rules = [n for n, l in enumerate(out) if l.startswith(startswith)]
+            rules = [n for n, l in enumerate(table) if l.startswith(startswith)]
             if rules:
                 return rules[0]
             return None
@@ -48,25 +48,29 @@ class AdjunctWorker(object):
         def run_ipt(*args):
             return subprocess.check_call([cmd, "-w"] + list(args))
 
-        out = subprocess.check_output(
-            [cmd + "-save"], universal_newlines=True
+        out_nat = subprocess.check_output(
+            [cmd + "-save", "-t", "nat"], universal_newlines=True
         ).splitlines()
-
+        out_filter = subprocess.check_output(
+            [cmd + "-save", "-t", "filter"], universal_newlines=True
+        ).splitlines()
+        
         if enable:
             # Create necessary prerouting chain.
-            if not find_pos_of_first_rule(out, ":PR-PLAIN-FORWARDING - "):
+            if not find_pos_of_first_rule(out_nat, ":PR-PLAIN-FORWARDING - "):
+                logging.info("Creating chain PR-PLAIN-FORWARDING on table nat.")
                 run_ipt("-t", "nat", "-N", "PR-PLAIN-FORWARDING")
 
             # Route prerouting traffic to necessary chain.
-            if not find_pos_of_first_rule(out, "-A POSTROUTING -j PR-PLAIN-FORWARDING"):
-                rule_num = find_pos_of_first_rule(out, "-A POSTROUTING -j MASQUERADE")
+            if not find_pos_of_first_rule(out_nat, "-A POSTROUTING -j PR-PLAIN-FORWARDING"):
+                rule_num = find_pos_of_first_rule(out_nat, "-A POSTROUTING -j MASQUERADE")
                 if not rule_num:
                     # This table does not contain the masquerading rule.
                     # Accordingly, we will not do anything.
                     return
-                first_rule_num = find_pos_of_first_rule(out, "-A POSTROUTING")
+                first_rule_num = find_pos_of_first_rule(out_nat, "-A POSTROUTING")
                 pos = rule_num - first_rule_num + 1
-                logging.info("Adding POSTROUTING chain PR-PLAIN-FORWARDING.")
+                logging.info("Adding chain PR-PLAIN-FORWARDING to chain POSTROUTING on table nat.")
                 run_ipt(
                     "-t",
                     "nat",
@@ -78,34 +82,35 @@ class AdjunctWorker(object):
                 )
 
             # Create necessary forward chain.
-            if not find_pos_of_first_rule(out, ":PLAIN-FORWARDING - "):
+            if not find_pos_of_first_rule(out_filter, ":PLAIN-FORWARDING - "):
+                logging.info("Creating chain PLAIN-FORWARDING on table filter.")
                 run_ipt("-t", "filter", "-N", "PLAIN-FORWARDING")
 
             # Route forward traffic to necessary chain.
-            if not find_pos_of_first_rule(out, "-A FORWARD -j PLAIN-FORWARDING"):
+            if not find_pos_of_first_rule(out_filter, "-A FORWARD -j PLAIN-FORWARDING"):
                 rule_num = find_pos_of_first_rule(
-                    out, "-A FORWARD -i vif+ -o vif+ -j DROP"
+                    out_filter, "-A FORWARD -i vif+ -o vif+ -j DROP"
                 )
                 if not rule_num:
                     # This table does not contain the masquerading rule.
                     # Accordingly, we will not do anything.
                     return
-                first_rule_num = find_pos_of_first_rule(out, "-A FORWARD")
+                first_rule_num = find_pos_of_first_rule(out_filter, "-A FORWARD")
                 pos = rule_num - first_rule_num + 1
-                logging.info("Adding FORWARD chain PLAIN-FORWARDING.")
+                logging.info("Adding chain PLAIN-FORWARDING to chain FORWARD on table filter.")
                 run_ipt(
                     "-t", "filter", "-I", "FORWARD", str(pos), "-j", "PLAIN-FORWARDING"
                 )
 
         rule = find_pos_of_first_rule(
-            out, "-A PR-PLAIN-FORWARDING -s {}{} -j ACCEPT".format(source, mask)
+            out_nat, "-A PR-PLAIN-FORWARDING -s {}{} -j ACCEPT".format(source, mask)
         )
         if enable:
             if rule:
                 pass
             else:
                 logging.info(
-                    "Adding POSTROUTING rule to forward traffic from %s.", source
+                    "Adding PR-PLAIN-FORWARDING rule on table nat to forward traffic from %s.", source
                 )
                 run_ipt(
                     "-t",
@@ -119,23 +124,23 @@ class AdjunctWorker(object):
                 )
         else:
             if rule:
-                first_rule = find_pos_of_first_rule(out, "-A PR-PLAIN-FORWARDING")
+                first_rule = find_pos_of_first_rule(out_nat, "-A PR-PLAIN-FORWARDING")
                 pos = rule - first_rule + 1
                 logging.info(
-                    "Removing POSTROUTING rule forwarding traffic from %s.", source
+                    "Removing PR-PLAIN-FORWARDING rule on table nat forwarding traffic from %s.", source
                 )
                 run_ipt("-t", "nat", "-D", "PR-PLAIN-FORWARDING", str(pos))
             else:
                 pass
 
         rule = find_pos_of_first_rule(
-            out, "-A PLAIN-FORWARDING -d {}{} -o vif+ -j ACCEPT".format(source, mask)
+            out_filter, "-A PLAIN-FORWARDING -d {}{} -o vif+ -j ACCEPT".format(source, mask)
         )
         if enable:
             if rule:
                 pass
             else:
-                logging.info("Adding FORWARD rule to allow traffic to %s.", source)
+                logging.info("Adding PLAIN-FORWARDING rule on table filter to allow traffic to %s.", source)
                 run_ipt(
                     "-t",
                     "filter",
@@ -150,8 +155,8 @@ class AdjunctWorker(object):
                 )
         else:
             if rule:
-                logging.info("Removing FORWARD rule allowing traffic to %s.", source)
-                first_rule = find_pos_of_first_rule(out, "-A PLAIN-FORWARDING")
+                logging.info("Removing PLAIN-FORWARDING rule on table filter allowing traffic to %s.", source)
+                first_rule = find_pos_of_first_rule(out_filter, "-A PLAIN-FORWARDING")
                 pos = rule - first_rule + 1
                 run_ipt("-t", "filter", "-D", "PLAIN-FORWARDING", str(pos))
             else:
