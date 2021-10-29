@@ -1,6 +1,6 @@
 # Qubes network server
 
-This software lets you turn your [Qubes OS 4.0](https://www.qubes-os.org/) machine into
+This software lets you turn your [Qubes OS 4.1](https://www.qubes-os.org/) machine into
 a network server, enjoying all the benefits of Qubes OS (isolation, secure
 inter-VM process communication, ease of use) with none of the drawbacks
 of setting up your own Xen server.
@@ -138,7 +138,7 @@ You will first build the `qubes-core-admin-addon-network-server` RPM.
 
 To build this package, you will need to use a `chroot` jail containing
 a Fedora installation of the exact same release as your `dom0` (Fedora 25
-for Qubes release 4.0, Fedora 31 for Qubes release 4.1).
+for Qubes release 4.0, Fedora 32 for Qubes release 4.1).
 
 Copy the source of the package to your `chroot`.  Then start a shell in
 your `chroot`, and type `make rpm`.  You may have to install some packages
