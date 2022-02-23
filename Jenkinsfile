@@ -8,4 +8,4 @@ def test_step() {
     }
 }
 
-genericFedoraRPMPipeline(null, null, null, null, test_step)
+genericFedoraRPMPipeline(null, null, null, null, test_step())
