@@ -100,4 +100,4 @@ to your Qubes OS server.  You are also able to run commands on the
 `exp-ssh` VM, directly from your manager machine.
 
 Should you want to run commands on *other* VMs of your Qubes OS server,
-then learn how to [enable remote management of your Qubes network server](https://github.com/Rudd-O/ansible-qubes/tree/master/doc/Remote management of Qubes OS servers.md).
+then learn how to [enable remote management of your Qubes network server](https://github.com/Rudd-O/ansible-qubes/tree/master/doc/Remote%20management%20of%20Qubes%20OS%20servers.md).
