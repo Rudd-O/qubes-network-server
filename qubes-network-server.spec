@@ -19,7 +19,6 @@ BuildRequires:  findutils
 BuildRequires:  python3
 BuildRequires:  python3-rpm-macros
 BuildRequires:  systemd-rpm-macros
-%global pythoninterp %{_bindir}/python3
 
 Requires:       qubes-core-agent-networking >= 4.1
 Requires:       python3
@@ -60,12 +59,12 @@ this software.
 
 %build
 # variables must be kept in sync with install
-make DESTDIR=$RPM_BUILD_ROOT SBINDIR=%{_sbindir} UNITDIR=%{_unitdir} PYTHON=%{pythoninterp}
+make DESTDIR=$RPM_BUILD_ROOT SBINDIR=%{_sbindir} UNITDIR=%{_unitdir} PYTHON=%{__python3}
 
 %install
 rm -rf $RPM_BUILD_ROOT
 # variables must be kept in sync with build
-make install DESTDIR=$RPM_BUILD_ROOT SBINDIR=%{_sbindir} UNITDIR=%{_unitdir} PYTHON=%{pythoninterp}
+make install DESTDIR=$RPM_BUILD_ROOT SBINDIR=%{_sbindir} UNITDIR=%{_unitdir} PYTHON=%{__python3}
 mkdir -p "$RPM_BUILD_ROOT"/%{_presetdir}
 echo 'enable qubes-routing-manager.service' > "$RPM_BUILD_ROOT"/%{_presetdir}/75-%{name}.preset
 
