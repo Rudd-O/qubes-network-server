@@ -76,7 +76,7 @@ class QubesNetworkServerExtension(qubes.ext.Extension):
 
     @qubes.ext.handler("domain-qdb-create")
     def on_domain_qdb_create(self, vm, event, **kwargs):
-        """ Fills the QubesDB with firewall entries. """
+        """Fills the QubesDB with firewall entries."""
         # pylint: disable=unused-argument
         l("domain create %s %s", vm, event)
         if vm.netvm:
