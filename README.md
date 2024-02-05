@@ -6,7 +6,8 @@ inter-VM process communication, ease of use) with none of the drawbacks
 of setting up your own Xen server.
 
 This release is only intended for use with Qubes OS 4.1.  Older Qubes OS releases
-will not support it.  For Qubes OS 4.0, check branch `r4.0`.
+will not support it.  For Qubes OS 4.0, check branch `r4.0`.  For Qubes OS 4.2,
+check the `master` branch.
 
 ## Why?
 
