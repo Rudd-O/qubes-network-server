@@ -9,3 +9,4 @@ pkgs/
 build
 *.egg-info
 src/*.service
+.mypy_cache

@@ -3,7 +3,7 @@
 %define mybuildnumber %{?build_number}%{?!build_number:1}
 
 Name:           qubes-network-server
-Version:        0.0.19
+Version:        0.1.0
 Release:        %{mybuildnumber}%{?dist}
 Summary:        Turn your Qubes OS into a network server
 BuildArch:      noarch
@@ -20,9 +20,10 @@ BuildRequires:  python3
 BuildRequires:  python3-rpm-macros
 BuildRequires:  systemd-rpm-macros
 
-Requires:       qubes-core-agent-networking >= 4.1
+Requires:       qubes-core-agent-networking >= 4.2
 Requires:       python3
 Requires:       python3-qubesdb
+Requires:       nftables
 
 %description
 This package lets you turn your Qubes OS into a network server.  Install this
@@ -44,7 +45,7 @@ BuildRequires:  python3-rpm-macros
 BuildRequires:  python3-setuptools
 
 Requires:       python3
-Requires:       qubes-core-dom0 >= 4.1
+Requires:       qubes-core-dom0 >= 4.2
 
 %description -n qubes-core-admin-addon-network-server
 This package lets you turn your Qubes OS into a network server.  Install this
@@ -70,6 +71,8 @@ echo 'enable qubes-routing-manager.service' > "$RPM_BUILD_ROOT"/%{_presetdir}/75
 
 %files
 %attr(0755, root, root) %{_sbindir}/qubes-routing-manager
+%attr(0644, root, root) %{python3_sitelib}/qubesroutingmanager/*
+%{python3_sitelib}/qubesroutingmanager-*.egg-info
 %attr(0644, root, root) %{_presetdir}/75-%{name}.preset
 %config %attr(0644, root, root) %{_unitdir}/qubes-routing-manager.service
 %doc README.md TODO

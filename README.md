@@ -1,12 +1,12 @@
 # Qubes network server
 
-This software lets you turn your [Qubes OS 4.1](https://www.qubes-os.org/) machine into
+This software lets you turn your [Qubes OS 4.2](https://www.qubes-os.org/) machine into
 a network server, enjoying all the benefits of Qubes OS (isolation, secure
 inter-VM process communication, ease of use) with none of the drawbacks
 of setting up your own Xen server.
 
-This release is only intended for use with Qubes OS 4.1.  Older Qubes OS releases
-will not support it.  For Qubes OS 4.0, check branch `r4.0`.
+This release is only intended for use with Qubes OS 4.2.  Older Qubes OS releases
+will not support it.  For Qubes OS 4.1, check branch `r4.1`.
 
 ## Why?
 
