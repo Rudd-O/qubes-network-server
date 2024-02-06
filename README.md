@@ -38,15 +38,18 @@ connectivity for ProxyVMs and other user VMs alike.
 
 No provision is made for running a server in a virtualized environment,
 such that the server's ports are accessible by (a) other VMs (b) machines
-beyond the perimeter of the NetVM.  To the extent that such a thing is
-possible, it is only possible by painstakingly maintaining firewall rules
-for multiple VMs, which need to carefully override the existing firewall
-rules, and require careful thought not to open the system to unexpected
-attack vectors.  The Qubes OS user interface provides no help either.
+beyond the perimeter of the NetVM.  By default, firewall rules in NetVMs
+prevent traffic from reaching any VM attached to them.  Furthermore, even
+with custom, permissive firewall rules, the IP addresses of VMs attached
+to any NetVM are not visible "on the other side of the NetVM", so firewall
+rules can only help with something like DNAT.  Finally, such custom firewalls
+require careful thought not to open the system to unexpected attack vectors.
+The Qubes OS user interface provides no means to set this up either.
 
 ### The Qubes network server networking model
 
-Qubes network server builds on that.
+Qubes network server builds on the Qubes security model and enhances it
+to optionally permit traffic to user VMs.
 
 ![Qubes network server model](./doc/Qubes%20network%20server%20model.png)
 
@@ -55,7 +58,8 @@ network servers in user VMs available to other machines, be them
 peer VMs in the same Qubes OS system or machines connected to
 a physical link shared by a NetVM.  Those network server VMs also
 obey the Qubes OS outbound firewall rules controls, letting you run
-services with outbound connections restricted.
+services with outbound connections restricted using the standard Qubes OS
+firewall system.
 
 This is all, of course, opt-in, so the standard Qubes OS network security
 model remains in effect until you decide to enable the feature on any
