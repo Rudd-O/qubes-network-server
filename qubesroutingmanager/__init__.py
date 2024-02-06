@@ -65,9 +65,11 @@ ADDRESS_FAMILY_IPV6 = "ip6"
 ADDRESS_FAMILY_IPV4 = "ip"
 TABLE_NAME = "qubes"
 FORWARD_CHAIN_NAME = "forward"
+POSTROUTING_CHAIN_NAME = "postrouting"
 ROUTING_MANAGER_CHAIN_NAME = "qubes-routing-manager"
+ROUTING_MANAGER_POSTROUTING_CHAIN_NAME = "qubes-routing-manager-postrouting"
 NFTABLES_CMD = "nft"
-ADD_RULE_AFTER_THIS_RULE = "custom-forward"
+ADD_FORWARD_RULE_AFTER_THIS_RULE = "custom-forward"
 
 
 def get_table(address_family: ADDRESS_FAMILIES, table: str) -> NFTablesOutput:
@@ -202,109 +204,157 @@ def setup_plain_forwarding_for_address(source: str, enable: bool, family: int) -
         forward_chain = [x for x in existing_chains if x["name"] == FORWARD_CHAIN_NAME][
             0
         ]
+        postrouting_chain = [
+            x for x in existing_chains if x["name"] == POSTROUTING_CHAIN_NAME
+        ][0]
     except IndexError:
         logging.warn(
-            "No forward chain in table %s, not setting up forwarding", TABLE_NAME
+            "No forward or postrouting chains in table %s, not setting up forwarding",
+            TABLE_NAME,
         )
         return
 
-    qubes_routing_manager_chain: None | Chain = None
-    try:
-        qubes_routing_manager_chain = [
-            x for x in existing_chains if x["name"] == ROUTING_MANAGER_CHAIN_NAME
-        ].pop()
-    except IndexError:
-        pass
-
-    if not qubes_routing_manager_chain:
-        logging.info(
-            "Adding %s chain to table %s", ROUTING_MANAGER_CHAIN_NAME, TABLE_NAME
-        )
-        add_chain(af, TABLE_NAME, ROUTING_MANAGER_CHAIN_NAME)
-
-    qubes_routing_manager_rule: None | Rule = None
-    try:
-        qubes_routing_manager_rule = [
-            x
-            for x in existing_rules
-            if x["chain"] == forward_chain["name"]
-            and x["family"] == af
-            and len(x["expr"]) == 1
-            and x["expr"][0].get("jump", {}).get("target") == ROUTING_MANAGER_CHAIN_NAME
-        ].pop()
-    except IndexError:
-        pass
-
-    if not qubes_routing_manager_rule:
+    for chain_name in [
+        ROUTING_MANAGER_CHAIN_NAME,
+        ROUTING_MANAGER_POSTROUTING_CHAIN_NAME,
+    ]:
+        chain: None | Chain = None
         try:
-            custom_forwarding_rule = [
-                x
-                for x in existing_rules
-                if x["chain"] == forward_chain["name"]
-                and len(x["expr"]) == 1
-                and x["expr"][0].get("jump", {}).get("target")
-                == ADD_RULE_AFTER_THIS_RULE
-            ][0]
+            chain = [x for x in existing_chains if x["name"] == chain_name].pop()
         except IndexError:
-            logging.warn(
-                "No state forwarding rule in chain %s of table %s, not setting up forwarding",
-                forward_chain["name"],
+            pass
+
+        if not chain:
+            logging.info(
+                "Adding %s chain to table %s and counter to chain",
+                chain_name,
                 TABLE_NAME,
             )
-        logging.info(
-            "Adding rule to jump to %s to table %s after jump to %s",
-            ROUTING_MANAGER_CHAIN_NAME,
-            TABLE_NAME,
-            ADD_RULE_AFTER_THIS_RULE,
-        )
-        append_rule_after(
-            af,
-            TABLE_NAME,
-            forward_chain["name"],
-            custom_forwarding_rule["handle"],
-            "jump",
-            ROUTING_MANAGER_CHAIN_NAME,
-        )
-        append_counter_at_end(
-            af,
-            TABLE_NAME,
-            ROUTING_MANAGER_CHAIN_NAME,
+            add_chain(af, TABLE_NAME, chain_name)
+            append_counter_at_end(
+                af,
+                TABLE_NAME,
+                chain_name,
+            )
+
+    def is_forward_jump_to_custom_forward(rule):
+        return (
+            rule["chain"] == forward_chain["name"]
+            and len(rule["expr"]) == 1
+            and rule["expr"][0].get("jump", {}).get("target")
+            == ADD_FORWARD_RULE_AFTER_THIS_RULE
         )
 
-    address_rules = [
-        x
-        for x in existing_rules
-        if x["chain"] == ROUTING_MANAGER_CHAIN_NAME
-        and len(x["expr"]) == 2
-        and x["expr"][0].get("match", {}).get("op", {}) == "=="
-        and x["expr"][0]["match"].get("left", {}).get("payload", {}).get("protocol", "")
-        == af
-        and x["expr"][0]["match"]["left"]["payload"].get("field", "") == "daddr"
-        and x["expr"][0].get("match", {}).get("right", []) == source
-        and "accept" in x["expr"][1]
-    ]
+    def is_postrouting_lo_accept(rule):
+        return (
+            rule["chain"] == postrouting_chain["name"]
+            and len(rule["expr"]) == 2
+            and rule["expr"][0].get("match", {}).get("op", "") == "=="
+            and rule["expr"][0]
+            .get("match", {})
+            .get("left", {})
+            .get("meta", {})
+            .get("key")
+            == "oif"
+            and rule["expr"][0].get("match", {}).get("right", "") == "lo"
+            and "accept" in rule["expr"][1]
+        )
 
-    if enable and not address_rules:
-        logging.info(
-            "Adding accept rule on chain %s to allow traffic to %s.",
+    for parent_chain, child_chain_name, previous_rule_detector in [
+        (
+            forward_chain,
             ROUTING_MANAGER_CHAIN_NAME,
-            source,
+            is_forward_jump_to_custom_forward,
+        ),
+        (
+            postrouting_chain,
+            ROUTING_MANAGER_POSTROUTING_CHAIN_NAME,
+            is_postrouting_lo_accept,
+        ),
+    ]:
+        jump_rule: None | Rule = None
+        try:
+            jump_rule = [
+                x
+                for x in existing_rules
+                if x["chain"] == parent_chain["name"]
+                and x["family"] == af
+                and len(x["expr"]) == 1
+                and x["expr"][0].get("jump", {}).get("target") == child_chain_name
+            ].pop()
+        except IndexError:
+            pass
+
+        if not jump_rule:
+            try:
+                previous_rule = [
+                    x for x in existing_rules if previous_rule_detector(x)
+                ][0]
+            except IndexError:
+                logging.warn(
+                    "Cannot find appropriate previous rule in chain %s of table %s, not setting up forwarding",
+                    parent_chain["name"],
+                    TABLE_NAME,
+                )
+            logging.info(
+                "Adding rule to jump from chain %s to chain %s in table %s",
+                parent_chain["name"],
+                child_chain_name,
+                TABLE_NAME,
+            )
+            append_rule_after(
+                af,
+                TABLE_NAME,
+                parent_chain["name"],
+                previous_rule["handle"],
+                "jump",
+                child_chain_name,
+            )
+
+    def detect_ip_rule(rule: Rule, chain_name: str, ip: str, mode: str):
+        return (
+            rule["chain"] == chain_name
+            and len(rule["expr"]) == 2
+            and rule["expr"][0].get("match", {}).get("op", {}) == "=="
+            and rule["expr"][0]["match"]
+            .get("left", {})
+            .get("payload", {})
+            .get("protocol", "")
+            == af
+            and rule["expr"][0]["match"]["left"]["payload"].get("field", "") == mode
+            and rule["expr"][0].get("match", {}).get("right", []) == ip
+            and "accept" in rule["expr"][1]
         )
-        append_rule_at_end(
-            af,
-            TABLE_NAME,
-            ROUTING_MANAGER_CHAIN_NAME,
-            af,
-            "daddr",
-            source,
-            "accept",
-        )
-    elif not enable and address_rules:
-        logging.info(
-            "Removing %s accept rules from chain %s to stop traffic to %s.",
-            len(address_rules),
-            ROUTING_MANAGER_CHAIN_NAME,
-            source,
-        )
-        for rule in reversed(sorted(address_rules, key=lambda r: r["handle"])):
-            delete_rule(af, TABLE_NAME, ROUTING_MANAGER_CHAIN_NAME, rule["handle"])
+
+    for chain_name, mode in [
+        (ROUTING_MANAGER_CHAIN_NAME, "daddr"),
+        (ROUTING_MANAGER_POSTROUTING_CHAIN_NAME, "saddr"),
+    ]:
+        address_rules = [
+            x for x in existing_rules if detect_ip_rule(x, chain_name, source, mode)
+        ]
+
+        if enable and not address_rules:
+            logging.info(
+                "Adding accept rule on chain %s for %s.",
+                chain_name,
+                source,
+            )
+            append_rule_at_end(
+                af,
+                TABLE_NAME,
+                chain_name,
+                af,
+                mode,
+                source,
+                "accept",
+            )
+        elif not enable and address_rules:
+            logging.info(
+                "Removing %s accept rules from chain %s for %s.",
+                len(address_rules),
+                chain_name,
+                source,
+            )
+            for rule in reversed(sorted(address_rules, key=lambda r: r["handle"])):
+                delete_rule(af, TABLE_NAME, chain_name, rule["handle"])
