@@ -73,36 +73,48 @@ the software is straightforward.
 
 These sample instructions assume:
 
-* you understand the distinction between dom0 and qubes
-* you already have an AppVM VM set up, named `testvm`,
+* the software is properly installed (see below),
+* you understand the distinction between dom0 and qubes,
+* you already have an AppVM VM set up, named `testvm`, and
 * your `sys-net` VM is attached to a network with subnet `192.168.16.0/24`
   — this, of course, may vary depending on your local router configuration.
 
 *Do not proceed any further if you do not yet meet these requirements.*
   
-First, attach the VM you want to expose to the network
+First, **attach** the VM you want to expose to the network
 to a NetVM that has an active network connection:
 
 `qvm-prefs -s testvm netvm sys-net`
 
-Then, set an IP address on the VM:
+Set an **IP** address on `testvm` belonging to the same LAN as `sys-net`:
 
 `qvm-prefs -s testvm ip 192.168.16.25`
 
-(The step above requires you restart the `testvm` VM if it was running.)
+**Restart** the `testvm` VM if it was already running.
 
-Then, to enable the network server feature for your `testvm` VM, all you have
-to do in your AdminVM (`dom0`) is run the following command:
+**Configure** routing method; to enable the network server feature for
+your `testvm` VM, all you have to do in your AdminVM (`dom0`) is run
+the following command:
 
 `qvm-features testvm routing-method forward`
 
 Now `testvm` is exposed to the network with address `192.168.16.25`, as well
 as to other VMs attached to `NetVM`.
 
-Do note that `testvm` will have the standard Qubes OS firewall rules stopping
-inbound traffic.  To solve that issue, you can
-[use the standard `rc.local` Qubes OS mechanism to alter the firewall rules](https://www.qubes-os.org/doc/firewall/#where-to-put-firewall-rules)
-in your `testvm` AppVM.
+Finally, adjust **input firewall rules** on `testvm` to permit traffic coming from
+machines in your LAN.  `testvm` will have the standard Qubes OS firewall
+rules stopping inbound traffic.  To solve that issue, you can use a sample
+rule in `testvm`:
+
+```
+sudo nft add rule qubes custom-input ip saddr 192.168.16.0/24 ct state new,established,related counter accept
+```
+
+You can make these rules persistent by [following instructions on the Qubes
+OS firewall documentation page](https://www.qubes-os.org/doc/firewall/#enabling-networking-between-two-qubes).
+Note that you do not need to change the `custom-forward` chain at all
+on any qube -- Qubes network server manages that for you transparently
+in your `NetVM`.
 
 Here are documents that will help you take advantage of Qubes network server:
 
