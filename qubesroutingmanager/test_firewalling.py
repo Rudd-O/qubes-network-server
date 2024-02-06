@@ -1,5 +1,3 @@
-import subprocess
-
 from unittest import mock
 from qubesroutingmanager import setup_plain_forwarding_for_address
 
