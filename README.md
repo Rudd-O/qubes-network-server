@@ -109,7 +109,7 @@ Here are documents that will help you take advantage of Qubes network server:
 * [Setting up your first server](doc/Setting up your first server.md)
 * [Setting up an SSH server](doc/Setting up an SSH server.md)
 
-## Installation of packages
+## Setup
 
 Package installation consists of two steps (**the package creation instructions are below**):
 
@@ -130,30 +130,38 @@ a terminal in your NetVM, then typing the following:
 systemctl status qubes-routing-manager.service
 ```
 
-The routing manager should show as `enabled` and `active` in the terminal output.
+The routing manager should show as `enabled` and `active` in the terminal
+output, with no errors.  You can now follow the usage instructions above.
 
 ### How to build the packages to install
 
 You will first build the `qubes-core-admin-addon-network-server` RPM.
 
 To build this package, you will need to use a `chroot` jail containing
-a Fedora installation of the exact same release as your `dom0` (Fedora 25
-for Qubes release 4.0, Fedora 32 for Qubes release 4.1).
+a Fedora installation of the exact same release as your `dom0` (Fedora 37
+for Qubes 4.2).  You can do this using `toolbox` (for maximum safety
+within a disposable qube):
 
-Copy the source of the package to your `chroot`.  Then start a shell in
-your `chroot`, and type `make rpm`.  You may have to install some packages
-in your `chroot` -- use `dnf install git rpm-build make coreutils tar gawk findutils systemd systemd-rpm-macros`
-to get the minimum dependency set installed.
+```
+dnf install -y toolbox
+toolbox create -r 37
+toolbox enter fedora-toolbox-37
+# Bam!  You have a shell in an isolated Fedora 37 instance now.
+```
 
-Once built, in the source directory you will find the RPM built for the
-exact release of Qubes you need.
+Within the toolbox, all your normal files from your home directory are
+visible.  Change into the directory that contains this source code,
+then type `make rpm`.  You may have to install some packages within your
+toolbox -- use `dnf install git rpm-build make coreutils tar gawk findutils systemd systemd-rpm-macros`
+to get the minimum dependency set installed.  Don't worry -- nothing within
+the toolbox affects
 
-Alternatively, you may first create a source RPM using `make srpm` on your
-regular workstation, then use `mock` to rebuild the source RPM produced
-in the source directory, using a Fedora release compatible with your `dom0`.
+Once built, in the source directory you will find the
+`qubes-core-admin-addon-network-server` RPM built for your dom0.
 
-To build the `qubes-network-server` RPM, you can use a DisposableVM running
-the same Fedora release as your NetVM.  Build said package as follows:
+To build the `qubes-network-server` RPM that goes in your template, you
+can simply use a DisposableVM running the same Fedora release as your NetVM.
+Build said package as follows:
 
 ```
 # Dependencies
@@ -165,8 +173,8 @@ make rpm
 ```
 
 The process will output a `qubes-network-server-*.noarch.rpm` in the
-directory where it ran.  Fish it out and save it into the VM where you'll
-install it.
+directory where it ran.  Fish it out and copy it into the template where
+you'll install it.
 
 You can power off the DisposableVM now.
 
