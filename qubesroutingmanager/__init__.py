@@ -139,15 +139,20 @@ def append_counter_at_end(
     )
 
 
-def append_rule_after(
-    address_family: ADDRESS_FAMILIES, table: str, chain: str, handle: int, *rest: str
+def _append_or_insert_rule(
+    where: Literal["add"] | Literal["insert"],
+    address_family: ADDRESS_FAMILIES,
+    table: str,
+    chain: str,
+    handle: int,
+    *rest: str,
 ) -> None:
     subprocess.check_output(
         [
             NFTABLES_CMD,
             "-n",
             "-j",
-            "add",
+            where,
             "rule",
             address_family,
             table,
@@ -158,6 +163,18 @@ def append_rule_after(
         + list(rest),
         text=True,
     )
+
+
+def append_rule_after(
+    address_family: ADDRESS_FAMILIES, table: str, chain: str, handle: int, *rest: str
+) -> None:
+    _append_or_insert_rule("add", address_family, table, chain, handle, *rest)
+
+
+def insert_rule_before(
+    address_family: ADDRESS_FAMILIES, table: str, chain: str, handle: int, *rest: str
+) -> None:
+    _append_or_insert_rule("insert", address_family, table, chain, handle, *rest)
 
 
 def delete_rule(
@@ -245,31 +262,25 @@ def setup_plain_forwarding_for_address(source: str, enable: bool, family: int) -
             == ADD_FORWARD_RULE_AFTER_THIS_RULE
         )
 
-    def is_postrouting_lo_accept(rule):
+    def is_postrouting_masquerade(rule):
         return (
             rule["chain"] == postrouting_chain["name"]
-            and len(rule["expr"]) == 2
-            and rule["expr"][0].get("match", {}).get("op", "") == "=="
-            and rule["expr"][0]
-            .get("match", {})
-            .get("left", {})
-            .get("meta", {})
-            .get("key")
-            == "oif"
-            and rule["expr"][0].get("match", {}).get("right", "") == "lo"
-            and "accept" in rule["expr"][1]
+            and len(rule["expr"]) == 1
+            and "masquerade" in rule["expr"][0]
         )
 
-    for parent_chain, child_chain_name, previous_rule_detector in [
+    for parent_chain, child_chain_name, previous_rule_detector, insertor in [
         (
             forward_chain,
             ROUTING_MANAGER_CHAIN_NAME,
             is_forward_jump_to_custom_forward,
+            append_rule_after,
         ),
         (
             postrouting_chain,
             ROUTING_MANAGER_POSTROUTING_CHAIN_NAME,
-            is_postrouting_lo_accept,
+            is_postrouting_masquerade,
+            insert_rule_before,
         ),
     ]:
         jump_rule: None | Rule = None
@@ -302,7 +313,7 @@ def setup_plain_forwarding_for_address(source: str, enable: bool, family: int) -
                 child_chain_name,
                 TABLE_NAME,
             )
-            append_rule_after(
+            insertor(
                 af,
                 TABLE_NAME,
                 parent_chain["name"],
