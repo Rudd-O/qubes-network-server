@@ -21,6 +21,7 @@ BuildRequires:  python3-rpm-macros
 BuildRequires:  systemd-rpm-macros
 
 Requires:       qubes-core-agent-networking >= 4.2
+Conflicts:      qubes-core-agent < 4.2
 Requires:       python3
 Requires:       python3-qubesdb
 Requires:       nftables
@@ -46,6 +47,7 @@ BuildRequires:  python3-setuptools
 
 Requires:       python3
 Requires:       qubes-core-dom0 >= 4.2
+Conflicts:      qubes-core-dom0 < 4.2
 
 %description -n qubes-core-admin-addon-network-server
 This package lets you turn your Qubes OS into a network server.  Install this
