@@ -11,7 +11,7 @@ src/qubes-routing-manager.service: src/qubes-routing-manager.service.in
 
 ROOT_DIR := $(shell dirname $(realpath $(firstword $(MAKEFILE_LIST))))
 
-.PHONY: clean dist rpm srpm install-template install-dom0
+.PHONY: clean dist rpm srpm install-template install-dom0 test
 
 clean:
 	cd $(ROOT_DIR) || exit $$? ; find -name '*.pyc' -o -name '*~' -print0 | xargs -0 rm -f
@@ -42,3 +42,6 @@ install-dom0:
 	PYTHONDONTWRITEBYTECODE=1 python3 networkserversetup.py install $(PYTHON_PREFIX_ARG) -O0 --root $(DESTDIR)
 
 install: install-dom0 install-template
+
+test:
+	tox --current-env

@@ -3,7 +3,7 @@
 %define mybuildnumber %{?build_number}%{?!build_number:1}
 
 Name:           qubes-network-server
-Version:        0.1.2
+Version:        0.1.3
 Release:        %{mybuildnumber}%{?dist}
 Summary:        Turn your Qubes OS into a network server
 BuildArch:      noarch
@@ -19,6 +19,9 @@ BuildRequires:  findutils
 BuildRequires:  python3
 BuildRequires:  python3-rpm-macros
 BuildRequires:  systemd-rpm-macros
+BuildRequires:  python3-tox-current-env
+BuildRequires:  python3-mypy
+BuildRequires:  python3-pytest
 
 Requires:       qubes-core-agent-networking >= 4.2
 Conflicts:      qubes-core-agent < 4.2
@@ -70,6 +73,9 @@ rm -rf $RPM_BUILD_ROOT
 make install DESTDIR=$RPM_BUILD_ROOT SBINDIR=%{_sbindir} UNITDIR=%{_unitdir} PYTHON=%{__python3}
 mkdir -p "$RPM_BUILD_ROOT"/%{_presetdir}
 echo 'enable qubes-routing-manager.service' > "$RPM_BUILD_ROOT"/%{_presetdir}/75-%{name}.preset
+
+%check
+tox --current-env
 
 %files
 %attr(0755, root, root) %{_sbindir}/qubes-routing-manager

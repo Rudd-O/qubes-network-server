@@ -14,7 +14,7 @@ import logging
 import os
 import socket
 
-import qubesdb
+import qubesdb  # type: ignore
 
 from qubesroutingmanager import setup_plain_forwarding_for_address
 

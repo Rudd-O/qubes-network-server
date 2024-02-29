@@ -4,10 +4,10 @@ import json
 import logging
 import subprocess
 
-from typing import TypedDict, Any, cast, Literal
+from typing import TypedDict, Any, cast, Literal, Union
 
 
-ADDRESS_FAMILIES = Literal["ip"] | Literal["ip6"]
+ADDRESS_FAMILIES = Union[Literal["ip"], Literal["ip6"]]
 
 
 class Chain(TypedDict):
@@ -69,7 +69,6 @@ POSTROUTING_CHAIN_NAME = "postrouting"
 ROUTING_MANAGER_CHAIN_NAME = "qubes-routing-manager"
 ROUTING_MANAGER_POSTROUTING_CHAIN_NAME = "qubes-routing-manager-postrouting"
 NFTABLES_CMD = "nft"
-ADD_FORWARD_RULE_AFTER_THIS_RULE = "custom-forward"
 
 
 def get_table(address_family: ADDRESS_FAMILIES, table: str) -> NFTablesOutput:
@@ -254,12 +253,21 @@ def setup_plain_forwarding_for_address(source: str, enable: bool, family: int) -
                 chain_name,
             )
 
-    def is_forward_jump_to_custom_forward(rule):
+    def is_oifgroup_2(rule):
         return (
             rule["chain"] == forward_chain["name"]
-            and len(rule["expr"]) == 1
-            and rule["expr"][0].get("jump", {}).get("target")
-            == ADD_FORWARD_RULE_AFTER_THIS_RULE
+            and len(rule["expr"]) == 3
+            and (
+                rule["expr"][0].get("match", {}).get("op") == "=="
+                and rule["expr"][0]
+                .get("match", {})
+                .get("left", {})
+                .get("meta", {})
+                .get("key")
+                == "oifgroup"
+                and rule["expr"][0].get("match", {}).get("right") == 2
+            )
+            and (rule["expr"][-1].get("drop", "not none") is None)
         )
 
     def is_postrouting_masquerade(rule):
@@ -273,8 +281,8 @@ def setup_plain_forwarding_for_address(source: str, enable: bool, family: int) -
         (
             forward_chain,
             ROUTING_MANAGER_CHAIN_NAME,
-            is_forward_jump_to_custom_forward,
-            append_rule_after,
+            is_oifgroup_2,
+            insert_rule_before,
         ),
         (
             postrouting_chain,
