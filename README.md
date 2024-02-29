@@ -8,6 +8,11 @@ of setting up your own Xen server.
 This release is only intended for use with Qubes OS 4.2.  Older Qubes OS releases
 will not support it.  For Qubes OS 4.1, check branch `r4.1`.
 
+**Important note about upgrades**: when you upgrade your system from Qubes OS 4.1 to
+Qubes OS 4.2, if you have this package installed in your template, the template will
+likely **fail to update**.  Please consult [our upgrade instructions](doc/distupgrade.md)
+for information on how to proceed.
+
 ## Why?
 
 Qubes OS is a magnificent operating system.  That said, there are many use cases its networking
