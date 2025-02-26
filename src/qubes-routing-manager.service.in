@@ -1,7 +1,7 @@
 [Unit]
 Description=Configure the network to allow network server VMs
 Documentation=https://github.com/Rudd-O/qubes-network-server
-After=qubes-iptables.service
+After=qubes-network.service qubes-iptables.service
 BindsTo=qubes-iptables.service
 
 [Service]
@@ -9,4 +9,4 @@ Type=notify
 ExecStart=@SBINDIR@/qubes-routing-manager
 
 [Install]
-WantedBy=qubes-iptables.service
+WantedBy=qubes-network.service
