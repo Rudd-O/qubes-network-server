@@ -3,7 +3,7 @@
 %define mybuildnumber %{?build_number}%{?!build_number:1}
 
 Name:           qubes-network-server
-Version:        0.1.4
+Version:        0.1.5
 Release:        %{mybuildnumber}%{?dist}
 Summary:        Turn your Qubes OS into a network server
 BuildArch:      noarch
@@ -90,12 +90,12 @@ tox --current-env
 %{python3_sitelib}/qubesnetworkserver-*.egg-info
 
 %post
+# Remove old unit enablement paths.
+rm -f %{_sysconfdir}/systemd/system/multi-user.target.wants/qubes-routing-manager.service || true
+rm -f %{_sysconfdir}/systemd/system/qubes-iptables.service.wants/qubes-routing-manager.service || true
 %systemd_post  qubes-routing-manager.service
 
 %preun
-# Remove obsolete unit enablement paths.
-rm -f %{_sysconfdir}/systemd/system/multi-user.target.wants/qubes-routing-manager.service || true
-rm -f %{_sysconfdir}/systemd/system/qubes-iptables.service.wants/qubes-routing-manager.service || true
 %systemd_preun qubes-routing-manager.service
 
 %postun
