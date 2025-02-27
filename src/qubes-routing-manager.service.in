@@ -3,6 +3,7 @@ Description=Configure the network to allow network server VMs
 Documentation=https://github.com/Rudd-O/qubes-network-server
 After=qubes-network.service qubes-iptables.service
 BindsTo=qubes-iptables.service
+ConditionPathExists=/var/run/qubes-service/qubes-network
 
 [Service]
 Type=notify
